@@ -15,11 +15,8 @@ The Walker Tournament Platform (WalkerCup) is a full-stack application designed 
 - **XP & Rewards**: Configurable experience points and reward distribution
 - **Real-time Updates**: Live tournament status and match progression
 
-### User & Team System
-- **Role-Based Access**: SuperAdmin, Community Manager, Team Council, Team Lead, Consultant, and Member roles
-- **Tribe Organization**: Multi-tribe support with team management
-- **Skill System**: Categorized skills and proficiency tracking
-- **User Profiles**: Comprehensive user management with stats and achievements
+
+
 
 ### Security & Authentication
 - **JWT Authentication**: Secure token-based authentication
@@ -31,7 +28,6 @@ The Walker Tournament Platform (WalkerCup) is a full-stack application designed 
 - **Modern UI/UX**: Sleek, responsive design with glassmorphism effects
 - **Interactive Animations**: Micro-interactions and smooth transitions
 - **Dark Mode**: Premium dark theme aesthetic
-- **Real-time Feedback**: Live validation and status updates
 
 ## 🛠️ Technology Stack
 
@@ -185,11 +181,7 @@ The system seeds a SuperAdmin account on first run:
 4. **Combat**: Admin resolves matches by declaring winners; system auto-promotes winners
 5. **Victory**: Final match determines the champion, awarding XP and closing the event
 
-### 2. User Management
-1. SuperAdmin creates Community Managers for tribes
-2. Community Managers create teams and assign roles
-3. Team Leads manage team members and submissions
-4. Users can be assigned multiple roles and skills
+
 
 ## 🧪 Testing
 
