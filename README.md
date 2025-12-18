@@ -4,7 +4,7 @@ A comprehensive tournament management platform for competitive gaming, featuring
 
 ## 📋 Overview
 
-The Walker Tournament Platform (WalkerCup) is a full-stack application designed to manage high-stakes gaming tournaments. It orchestrates the complete lifecycle of combat events, from player registration to bracket generation, match resolution, and championship determination. The system ensures data integrity through optimistic concurrency control and delivers real-time tournament progression.
+The Walker Tournament Platform (WalkerCup) is a full-stack application designed to manage high-stakes gaming tournaments. It orchestrates the complete lifecycle of combat events, from player registration to bracket generation, match resolution, and championship determination. The system ensures data integrity through optimistic concurrency control.
 
 ## ✨ Features
 
