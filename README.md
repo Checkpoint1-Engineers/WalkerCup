@@ -13,7 +13,7 @@ The Walker Tournament Platform (WalkerCup) is a full-stack application designed 
 - **Automated Bracket System**: Automatic bracket generation and winner progression
 - **Multiple Formats**: Support for 1v1, 5v5, and custom tournament formats
 - **XP & Rewards**: Configurable experience points and reward distribution
-- **Real-time Updates**: Live tournament status and match progression
+
 
 
 

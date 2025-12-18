@@ -142,6 +142,12 @@ public class TournamentService : ITournamentService
             return new ServiceResult(false, Error: "Registration deadline has passed");
         }
 
+        // Check for max participants
+        if (tournament.Members.Count >= tournament.MaxParticipants)
+        {
+            return new ServiceResult(false, Error: "Tournament is full");
+        }
+
         // Check for duplicate (WalkerId + WalkerName combination)
         var exists = await _memberRepository.ExistsAsync(tournamentId, walkerId, walkerName, ct);
         if (exists)
