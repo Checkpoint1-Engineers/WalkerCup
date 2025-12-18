@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walker Tournament API - Mission Briefing</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">WALKER API</div>
+            <div class="version">DOCS V1.0 // CLASSIFIED</div>
+        </div>
+
+        <div class="nav-scroller">
+            <div class="nav-group">
+                <div class="nav-title">Mission Briefing</div>
+                <a href="index.html" class="nav-item active">System Overview</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Frontend Operations</div>
+                <a href="frontend.html" class="nav-item">Integration Guide</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Backend Intelligence</div>
+                <a href="backend.html" class="nav-item">Architecture Deep Dive</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Reference</div>
+                <a href="reference.html" class="nav-item">API Endpoints</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="main-content">
+        <div class="container">
+
+            <section id="overview">
+                <h1>System Overview</h1>
+                <p>The Walker Tournament API is the central nervous system for tournament management. It orchestrates
+                    the lifecycle of combat events, from initial registration to the final championship match.</p>
+
+                <div class="info-panel">
+                    <h3 style="margin-top:0">Mission Objective</h3>
+                    <p style="margin-bottom:0">To provide a robust, secure, and real-time backend for managing
+                        high-stakes Walker Bracket Tournaments. The system ensures data integrity via optimistic
+                        concurrency and delivers automated bracket progression.</p>
+                </div>
+            </section>
+
+            <section id="workflow">
+                <h2>Core Workflows</h2>
+                <h3>1. The Tournament Loop</h3>
+                <ul>
+                    <li><strong>Draft:</strong> Admin creates a tournament. Configures XP rewards and deadlines.</li>
+                    <li><strong>Registration:</strong> Public walkers join via the open endpoint.</li>
+                    <li><strong>Lock & Draw:</strong> Admin locks the tournament (closing registration) and triggers the
+                        bracket generation engine.</li>
+                    <li><strong>Combat:</strong> Admin resolves matches by declaring winners. The system automatically
+                        promotes winners to the next round.</li>
+                    <li><strong>Victory:</strong> The final match determines the champion, awarding XP and closing the
+                        event.</li>
+                </ul>
+            </section>
+
+        </div>
+    </main>
+
+</body>
+
+</html>

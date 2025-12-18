@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walker Tournament API - Reference</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">WALKER API</div>
+            <div class="version">DOCS V1.0 // CLASSIFIED</div>
+        </div>
+
+        <div class="nav-scroller">
+            <div class="nav-group">
+                <div class="nav-title">Mission Briefing</div>
+                <a href="index.html" class="nav-item">System Overview</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Frontend Operations</div>
+                <a href="frontend.html" class="nav-item">Integration Guide</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Backend Intelligence</div>
+                <a href="backend.html" class="nav-item">Architecture Deep Dive</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Reference</div>
+                <a href="reference.html" class="nav-item active">API Endpoints</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="main-content">
+        <div class="container">
+
+            <section id="endpoints">
+                <h1>Endpoint Reference</h1>
+                <p>Key endpoints for operation. All protected endpoints require a Bearer Token.</p>
+
+                <h3 style="margin-top: 40px;">Authentication</h3>
+                <div class="info-panel">
+                    <div style="margin-bottom:12px;">
+                        <span class="badge post">POST</span> <code>/api/auth/login</code>
+                    </div>
+                    <strong>Description:</strong> Authenticates user credentials.
+                    <br><br>
+                    <strong>Body:</strong> <code>{ "email": "...", "password": "..." }</code>
+                    <br><br>
+                    <strong>Returns:</strong> <code>{ "token": "jwt...", "expiration": "..." }</code>
+                </div>
+
+                <h3>Tournaments</h3>
+                <div class="info-panel">
+                    <div style="margin-bottom:12px;">
+                        <span class="badge post">POST</span> <code>/api/tournaments</code>
+                    </div>
+                    <strong>Description:</strong> Create new tournament. <strong>(Admin Only)</strong>
+                    <br><br>
+                    <strong>Body:</strong> <code>{ "name": "Cup", "joinDeadline": "iso-date", "xpPerWin": 100 }</code>
+                </div>
+
+                <div class="info-panel">
+                    <div style="margin-bottom:12px;">
+                        <span class="badge get">GET</span> <code>/api/tournaments</code>
+                    </div>
+                    <strong>Description:</strong> List all tournaments. <strong>(Admin Only)</strong>
+                </div>
+
+                <div class="info-panel">
+                    <div style="margin-bottom:12px;">
+                        <span class="badge post">POST</span> <code>/api/tournaments/{id}/join</code>
+                    </div>
+                    <strong>Description:</strong> Public registration. Rate limited to 10 requests/min.
+                    <br><br>
+                    <strong>Body:</strong> <code>{ "walkerId": 123, "walkerName": "Name" }</code>
+                </div>
+
+                <h3>Matches</h3>
+                <div class="info-panel">
+                    <div style="margin-bottom:12px;">
+                        <span class="badge post">POST</span> <code>/api/matches/{id}/winner</code>
+                    </div>
+                    <strong>Description:</strong> Set match winner. Triggers auto-advancement logic. <strong>(Admin
+                        Only)</strong>
+                    <br><br>
+                    <strong>Body:</strong> <code>{ "winnerId": "guid" }</code>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+</body>
+
+</html>

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walker Tournament API - Frontend Operations</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">WALKER API</div>
+            <div class="version">DOCS V1.0 // CLASSIFIED</div>
+        </div>
+
+        <div class="nav-scroller">
+            <div class="nav-group">
+                <div class="nav-title">Mission Briefing</div>
+                <a href="index.html" class="nav-item">System Overview</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Frontend Operations</div>
+                <a href="frontend.html" class="nav-item active">Integration Guide</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Backend Intelligence</div>
+                <a href="backend.html" class="nav-item">Architecture Deep Dive</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Reference</div>
+                <a href="reference.html" class="nav-item">API Endpoints</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="main-content">
+        <div class="container">
+
+            <section id="fe-integration">
+                <h1>Field Operations: Frontend Integration</h1>
+                <p>This section details how to connect your client interface (React, Vue, etc.) to the API.</p>
+
+                <h3 id="fe-auth">Authentication Strategy</h3>
+                <p>The API uses <strong>JWT (JSON Web Tokens)</strong>. The frontend must handle token storage and
+                    header injection.</p>
+
+                <h4>Step 1: The Login Handshake</h4>
+                <p>Send a POST request with email/password. Receive a token.</p>
+                <pre>
+const login = async (email, password) => {
+  const res = await fetch('http://localhost:5270/api/auth/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  
+  const data = await res.json();
+  if (data.token) {
+    localStorage.setItem('authToken', data.token); // Store securely
+  }
+};
+</pre>
+
+                <h4>Step 2: Authenticated Requests (Interceptor Pattern)</h4>
+                <p>Create a wrapper for <code>fetch</code> that automatically injects the token.</p>
+                <pre>
+const secureFetch = async (endpoint, options = {}) => {
+  const token = localStorage.getItem('authToken');
+  
+  const headers = {
+    'Content-Type': 'application/json',
+    ...options.headers
+  };
+  
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(`http://localhost:5270${endpoint}`, {
+    ...options,
+    headers
+  });
+
+  if (response.status === 401) {
+    // Token expired! Redirect to login
+    window.location.href = '/login';
+  }
+
+  return response;
+};
+
+// Usage:
+// await secureFetch('/api/tournaments');
+</pre>
+
+                <h3 id="fe-models">TypeScript Interfaces</h3>
+                <p>Use these definitions to type your frontend state.</p>
+                <pre>
+// The Tournament Object
+interface Tournament {
+  id: string;
+  name: string;
+  status: 'Draft' | 'Open' | 'Locked' | 'InProgress' | 'Completed';
+  xpPerWin: number;
+  matches: Match[];
+}
+
+// The Match Node
+interface Match {
+  id: string;
+  roundNumber: number;
+  participantA?: TournamentMember;
+  participantB?: TournamentMember;
+  winner?: TournamentMember;
+  nextMatchId?: string; // The parent node in the tree
+}
+
+interface TournamentMember {
+  id: string;
+  walkerName: string;
+  xpEarned: number;
+}
+</pre>
+            </section>
+
+        </div>
+    </main>
+
+</body>
+
+</html>

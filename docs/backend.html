@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walker Tournament API - Backend Intelligence</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">WALKER API</div>
+            <div class="version">DOCS V1.0 // CLASSIFIED</div>
+        </div>
+
+        <div class="nav-scroller">
+            <div class="nav-group">
+                <div class="nav-title">Mission Briefing</div>
+                <a href="index.html" class="nav-item">System Overview</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Frontend Operations</div>
+                <a href="frontend.html" class="nav-item">Integration Guide</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Backend Intelligence</div>
+                <a href="backend.html" class="nav-item active">Architecture Deep Dive</a>
+            </div>
+
+            <div class="nav-group">
+                <div class="nav-title">Reference</div>
+                <a href="reference.html" class="nav-item">API Endpoints</a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- CONTENT -->
+    <main class="main-content">
+        <div class="container">
+
+            <section id="be-arch">
+                <h1>Backend Intelligence: Deep Dive</h1>
+                <p>For engineers extending the API logic.</p>
+
+                <h3>Architecture Patterns</h3>
+                <div class="tech-grid">
+                    <div class="tech-card">
+                        <span class="tech-name">Clean Architecture</span>
+                        <span class="tech-desc">Core Domain Entities are isolated from External Frameworks (API,
+                            DB).</span>
+                    </div>
+                    <div class="tech-card">
+                        <span class="tech-name">Repository Pattern</span>
+                        <span class="tech-desc"><code>MatchRepository</code> handles complex EF Core graph
+                            queries.</span>
+                    </div>
+                    <div class="tech-card">
+                        <span class="tech-name">Strategy Pattern</span>
+                        <span class="tech-desc"><code>SingleEliminationStrategy</code> encapsulates the bracket creation
+                            math.</span>
+                    </div>
+                </div>
+
+                <h3 id="be-db">Database Schema Strategy</h3>
+                <p>The system uses a self-referencing relationship on the <code>Matches</code> table to build the
+                    bracket tree.</p>
+                <ul>
+                    <li><strong>Matches Table:</strong> Contains <code>NextMatchId</code> FK pointing to another Match.
+                    </li>
+                    <li><strong>Concurrency:</strong> Uses <code>RowVersion</code> (Concurrency Token) to prevent "Lost
+                        Update" problems when two admins try to update a match simultaneously.</li>
+                </ul>
+
+                <h3 id="be-logic">Algorithmic Insight: Bracket Generation</h3>
+                <p>The <code>DrawAsync</code> method performs the following:</p>
+                <ol>
+                    <li>Shuffles registered participants randomly.</li>
+                    <li>Calculates the nearest power of 2 (e.g., if 6 players, nearest is 8).</li>
+                    <li>Identifies "Byes" (players who skip Round 1).</li>
+                    <li>Generates Round 1 matches.</li>
+                    <li>Recursively generates subsequent rounds (Winners of R1 -> Match in R2).</li>
+                    <li>Saves the entire graph transactionally.</li>
+                </ol>
+            </section>
+
+        </div>
+    </main>
+
+</body>
+
+</html>
