@@ -126,7 +126,7 @@ public class TournamentService : ITournamentService
 
     public async Task<ServiceResult> JoinAsync(Guid tournamentId, int walkerId, string walkerName, CancellationToken ct = default)
     {
-        var tournament = await _tournamentRepository.GetByIdAsync(tournamentId, ct);
+        var tournament = await _tournamentRepository.GetByIdWithMembersAsync(tournamentId, ct);
         if (tournament == null)
         {
             return new ServiceResult(false, Error: "Tournament not found");
@@ -140,6 +140,12 @@ public class TournamentService : ITournamentService
         if (DateTime.UtcNow > tournament.JoinDeadline)
         {
             return new ServiceResult(false, Error: "Registration deadline has passed");
+        }
+
+        // Check for max participants
+        if (tournament.Members.Count >= tournament.MaxParticipants)
+        {
+            return new ServiceResult(false, Error: "Tournament is full");
         }
 
         // Check for duplicate (WalkerId + WalkerName combination)
