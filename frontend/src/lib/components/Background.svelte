@@ -7,7 +7,7 @@
     let width, height;
 
     // Config
-    const droneSrc = "/assets/drone/2.png"; // Using existing asset
+    const droneSrc = "/assets/drone/2.webp"; // Using existing asset
 
     // State
     let mouse = { x: 0, y: 0 };
