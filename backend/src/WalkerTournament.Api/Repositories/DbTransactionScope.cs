@@ -5,27 +5,16 @@ using WalkerTournament.Api.Data;
 namespace WalkerTournament.Api.Repositories;
 
 /// <summary>
-/// Unit of Work implementation that manages transactions at the repository layer.
+/// Implementation of database transaction scope for atomic operations.
 /// </summary>
-public class UnitOfWork : IUnitOfWork
+public class DbTransactionScope : IDbTransactionScope
 {
     private readonly AppDbContext _context;
     private IDbContextTransaction? _transaction;
-    
-    public ITournamentRepository Tournaments { get; }
-    public ITournamentMemberRepository TournamentMembers { get; }
-    public IMatchRepository Matches { get; }
 
-    public UnitOfWork(
-        AppDbContext context,
-        ITournamentRepository tournaments,
-        ITournamentMemberRepository tournamentMembers,
-        IMatchRepository matches)
+    public DbTransactionScope(AppDbContext context)
     {
         _context = context;
-        Tournaments = tournaments;
-        TournamentMembers = tournamentMembers;
-        Matches = matches;
     }
 
     public async Task BeginTransactionAsync(CancellationToken ct = default)
@@ -63,3 +52,4 @@ public class UnitOfWork : IUnitOfWork
         _transaction?.Dispose();
     }
 }
+

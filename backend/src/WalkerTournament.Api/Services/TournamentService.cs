@@ -5,7 +5,7 @@ namespace WalkerTournament.Api.Services;
 
 public class TournamentService : ITournamentService
 {
-    private readonly IUnitOfWork _unitOfWork;
+    private readonly IDbTransactionScope _transactionScope;
     private readonly ITournamentRepository _tournamentRepository;
     private readonly ITournamentMemberRepository _memberRepository;
     private readonly IMatchRepository _matchRepository;
@@ -13,20 +13,21 @@ public class TournamentService : ITournamentService
     private readonly IAuditLogService _auditLogService;
 
     public TournamentService(
-        IUnitOfWork unitOfWork,
+        IDbTransactionScope transactionScope,
         ITournamentRepository tournamentRepository,
         ITournamentMemberRepository memberRepository,
         IMatchRepository matchRepository,
         IBracketStrategy bracketStrategy,
         IAuditLogService auditLogService)
     {
-        _unitOfWork = unitOfWork;
+        _transactionScope = transactionScope;
         _tournamentRepository = tournamentRepository;
         _memberRepository = memberRepository;
         _matchRepository = matchRepository;
         _bracketStrategy = bracketStrategy;
         _auditLogService = auditLogService;
     }
+
 
     public async Task<ServiceResult<Tournament>> CreateAsync(
         string name, string? description, DateTime joinDeadline, int xpPerWin, int maxParticipants, string? imageUrl, Guid createdByUserId, CancellationToken ct = default)
@@ -126,25 +127,25 @@ public class TournamentService : ITournamentService
     public async Task<ServiceResult> JoinAsync(Guid tournamentId, int walkerId, string walkerName, CancellationToken ct = default)
     {
         // Use UnitOfWork transaction to prevent race condition on MaxParticipants check
-        await _unitOfWork.BeginTransactionAsync(ct);
+        await _transactionScope.BeginTransactionAsync(ct);
         try
         {
             var tournament = await _tournamentRepository.GetByIdAsync(tournamentId, ct);
             if (tournament == null)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await _transactionScope.RollbackAsync(ct);
                 return new ServiceResult(false, Error: "Tournament not found");
             }
 
             if (tournament.Status != TournamentStatus.Open)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await _transactionScope.RollbackAsync(ct);
                 return new ServiceResult(false, Error: "Tournament is not open for registration");
             }
 
             if (DateTime.UtcNow > tournament.JoinDeadline)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await _transactionScope.RollbackAsync(ct);
                 return new ServiceResult(false, Error: "Registration deadline has passed");
             }
 
@@ -152,7 +153,7 @@ public class TournamentService : ITournamentService
             var currentCount = await _memberRepository.GetCountByTournamentAsync(tournamentId, ct);
             if (currentCount >= tournament.MaxParticipants)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await _transactionScope.RollbackAsync(ct);
                 return new ServiceResult(false, Error: "Tournament is full");
             }
 
@@ -160,7 +161,7 @@ public class TournamentService : ITournamentService
             var exists = await _memberRepository.ExistsAsync(tournamentId, walkerId, walkerName, ct);
             if (exists)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await _transactionScope.RollbackAsync(ct);
                 return new ServiceResult(false, Error: "This walker is already registered for this tournament");
             }
 
@@ -175,14 +176,14 @@ public class TournamentService : ITournamentService
             };
 
             await _memberRepository.AddAsync(member, ct);
-            await _unitOfWork.SaveChangesAsync(ct);
-            await _unitOfWork.CommitAsync(ct);
+            await _transactionScope.SaveChangesAsync(ct);
+            await _transactionScope.CommitAsync(ct);
 
             return new ServiceResult(true);
         }
         catch
         {
-            await _unitOfWork.RollbackAsync(ct);
+            await _transactionScope.RollbackAsync(ct);
             throw;
         }
     }
@@ -219,19 +220,19 @@ public class TournamentService : ITournamentService
     public async Task<ServiceResult> DrawAsync(Guid tournamentId, CancellationToken ct = default)
     {
         // Use UnitOfWork transaction to ensure atomic bracket generation
-        await _unitOfWork.BeginTransactionAsync(ct);
+        await _transactionScope.BeginTransactionAsync(ct);
         try
         {
             var tournament = await _tournamentRepository.GetByIdWithMembersAsync(tournamentId, ct);
             if (tournament == null)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await _transactionScope.RollbackAsync(ct);
                 return new ServiceResult(false, Error: "Tournament not found");
             }
 
             if (tournament.Status != TournamentStatus.Locked)
             {
-                await _unitOfWork.RollbackAsync(ct);
+                await _transactionScope.RollbackAsync(ct);
                 return new ServiceResult(false, Error: "Tournament must be locked before drawing");
             }
 
@@ -244,8 +245,8 @@ public class TournamentService : ITournamentService
             tournament.UpdatedAt = DateTime.UtcNow;
 
             await _tournamentRepository.UpdateAsync(tournament, ct);
-            await _unitOfWork.SaveChangesAsync(ct);
-            await _unitOfWork.CommitAsync(ct);
+            await _transactionScope.SaveChangesAsync(ct);
+            await _transactionScope.CommitAsync(ct);
 
             await _auditLogService.LogAsync(tournament.CreatedByUserId, "Draw", "Tournament", tournament.Id, ct);
 
@@ -253,7 +254,7 @@ public class TournamentService : ITournamentService
         }
         catch
         {
-            await _unitOfWork.RollbackAsync(ct);
+            await _transactionScope.RollbackAsync(ct);
             throw;
         }
     }

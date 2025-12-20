@@ -35,7 +35,11 @@ public class MatchController : ControllerBase
 
         if (!result.Success)
         {
-            if (result.Error!.Contains("concurrency", StringComparison.OrdinalIgnoreCase))
+            if (result.Error == "Match not found")
+            {
+                return NotFound(new ErrorResponse(result.Error));
+            }
+            if (result.Error!.Contains("modified by another user", StringComparison.OrdinalIgnoreCase))
             {
                 return Conflict(new ErrorResponse(result.Error));
             }
@@ -44,4 +48,5 @@ public class MatchController : ControllerBase
 
         return Ok(new { message = "Winner set successfully" });
     }
+
 }

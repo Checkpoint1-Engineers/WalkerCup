@@ -12,7 +12,7 @@ public class TournamentServiceTests
     private readonly Mock<IMatchRepository> _matchRepoMock;
     private readonly Mock<IBracketStrategy> _bracketStrategyMock;
     private readonly Mock<IAuditLogService> _auditLogServiceMock;
-    private readonly Mock<IUnitOfWork> _unitOfWorkMock;
+    private readonly Mock<IDbTransactionScope> _transactionScopeMock;
     private readonly TournamentService _service;
 
     public TournamentServiceTests()
@@ -22,20 +22,20 @@ public class TournamentServiceTests
         _matchRepoMock = new Mock<IMatchRepository>();
         _bracketStrategyMock = new Mock<IBracketStrategy>();
         _auditLogServiceMock = new Mock<IAuditLogService>();
-        _unitOfWorkMock = new Mock<IUnitOfWork>();
+        _transactionScopeMock = new Mock<IDbTransactionScope>();
 
-        // Setup UnitOfWork to return successfully by default
-        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<CancellationToken>()))
+        // Setup transaction scope to return successfully by default
+        _transactionScopeMock.Setup(t => t.BeginTransactionAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _unitOfWorkMock.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>()))
+        _transactionScopeMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _unitOfWorkMock.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>()))
+        _transactionScopeMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
-        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+        _transactionScopeMock.Setup(t => t.SaveChangesAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(1);
 
         _service = new TournamentService(
-            _unitOfWorkMock.Object,
+            _transactionScopeMock.Object,
             _tournamentRepoMock.Object,
             _memberRepoMock.Object,
             _matchRepoMock.Object,
@@ -43,6 +43,7 @@ public class TournamentServiceTests
             _auditLogServiceMock.Object
         );
     }
+
 
     [Fact]
     public async Task CreateAsync_ShouldCreateTournament_WhenValidDataProvided()
@@ -96,8 +97,8 @@ public class TournamentServiceTests
         // Assert
         Assert.True(result.Success);
         _memberRepoMock.Verify(r => r.AddAsync(It.IsAny<TournamentMember>(), It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        _unitOfWorkMock.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _transactionScopeMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _transactionScopeMock.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -114,7 +115,7 @@ public class TournamentServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Tournament not found", result.Error);
-        _unitOfWorkMock.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _transactionScopeMock.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -139,7 +140,7 @@ public class TournamentServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Registration deadline has passed", result.Error);
-        _unitOfWorkMock.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _transactionScopeMock.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -169,7 +170,7 @@ public class TournamentServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Tournament is full", result.Error);
-        _unitOfWorkMock.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _transactionScopeMock.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }
 
