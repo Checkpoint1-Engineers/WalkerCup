@@ -1,5 +1,4 @@
 using Moq;
-using WalkerTournament.Api.Data;
 using WalkerTournament.Api.Entities;
 using WalkerTournament.Api.Repositories;
 using WalkerTournament.Api.Services;
@@ -13,7 +12,7 @@ public class TournamentServiceTests
     private readonly Mock<IMatchRepository> _matchRepoMock;
     private readonly Mock<IBracketStrategy> _bracketStrategyMock;
     private readonly Mock<IAuditLogService> _auditLogServiceMock;
-    private readonly Mock<AppDbContext> _dbContextMock;
+    private readonly Mock<IUnitOfWork> _unitOfWorkMock;
     private readonly TournamentService _service;
 
     public TournamentServiceTests()
@@ -23,10 +22,20 @@ public class TournamentServiceTests
         _matchRepoMock = new Mock<IMatchRepository>();
         _bracketStrategyMock = new Mock<IBracketStrategy>();
         _auditLogServiceMock = new Mock<IAuditLogService>();
-        _dbContextMock = new Mock<AppDbContext>(new Microsoft.EntityFrameworkCore.DbContextOptions<AppDbContext>());
+        _unitOfWorkMock = new Mock<IUnitOfWork>();
+
+        // Setup UnitOfWork to return successfully by default
+        _unitOfWorkMock.Setup(u => u.BeginTransactionAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _unitOfWorkMock.Setup(u => u.CommitAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _unitOfWorkMock.Setup(u => u.RollbackAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _unitOfWorkMock.Setup(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
 
         _service = new TournamentService(
-            _dbContextMock.Object,
+            _unitOfWorkMock.Object,
             _tournamentRepoMock.Object,
             _memberRepoMock.Object,
             _matchRepoMock.Object,
@@ -75,6 +84,9 @@ public class TournamentServiceTests
         _tournamentRepoMock.Setup(r => r.GetByIdAsync(tournamentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tournament);
 
+        _memberRepoMock.Setup(r => r.GetCountByTournamentAsync(tournamentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(0);
+
         _memberRepoMock.Setup(r => r.ExistsAsync(tournamentId, It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
 
@@ -84,7 +96,8 @@ public class TournamentServiceTests
         // Assert
         Assert.True(result.Success);
         _memberRepoMock.Verify(r => r.AddAsync(It.IsAny<TournamentMember>(), It.IsAny<CancellationToken>()), Times.Once);
-        _memberRepoMock.Verify(r => r.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(u => u.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _unitOfWorkMock.Verify(u => u.CommitAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -101,6 +114,7 @@ public class TournamentServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Tournament not found", result.Error);
+        _unitOfWorkMock.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -125,6 +139,7 @@ public class TournamentServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Registration deadline has passed", result.Error);
+        _unitOfWorkMock.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -140,13 +155,13 @@ public class TournamentServiceTests
             Name = "Full Tournament",
             MaxParticipants = 2
         };
-        
-        // Simulate 2 existing members
-        tournament.Members.Add(new TournamentMember { Id = Guid.NewGuid() });
-        tournament.Members.Add(new TournamentMember { Id = Guid.NewGuid() });
 
         _tournamentRepoMock.Setup(r => r.GetByIdAsync(tournamentId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(tournament);
+
+        // Use the repository count method instead of Members collection
+        _memberRepoMock.Setup(r => r.GetCountByTournamentAsync(tournamentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(2); // Tournament is full
 
         // Act
         var result = await _service.JoinAsync(tournamentId, 1, "NewWalker");
@@ -154,5 +169,7 @@ public class TournamentServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Tournament is full", result.Error);
+        _unitOfWorkMock.Verify(u => u.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }
+

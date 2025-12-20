@@ -36,6 +36,13 @@ public class TournamentMemberRepository : ITournamentMemberRepository
             .ToListAsync(ct);
     }
 
+    public async Task<int> GetCountByTournamentAsync(Guid tournamentId, CancellationToken ct = default)
+    {
+        return await _context.TournamentMembers
+            .CountAsync(m => m.TournamentId == tournamentId, ct);
+    }
+
+
     public async Task AddAsync(TournamentMember member, CancellationToken ct = default)
     {
         await _context.TournamentMembers.AddAsync(member, ct);

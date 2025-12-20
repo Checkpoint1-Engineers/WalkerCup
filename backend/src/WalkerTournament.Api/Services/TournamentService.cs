@@ -1,4 +1,3 @@
-using WalkerTournament.Api.Data;
 using WalkerTournament.Api.Entities;
 using WalkerTournament.Api.Repositories;
 
@@ -6,7 +5,7 @@ namespace WalkerTournament.Api.Services;
 
 public class TournamentService : ITournamentService
 {
-    private readonly AppDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly ITournamentRepository _tournamentRepository;
     private readonly ITournamentMemberRepository _memberRepository;
     private readonly IMatchRepository _matchRepository;
@@ -14,14 +13,14 @@ public class TournamentService : ITournamentService
     private readonly IAuditLogService _auditLogService;
 
     public TournamentService(
-        AppDbContext context,
+        IUnitOfWork unitOfWork,
         ITournamentRepository tournamentRepository,
         ITournamentMemberRepository memberRepository,
         IMatchRepository matchRepository,
         IBracketStrategy bracketStrategy,
         IAuditLogService auditLogService)
     {
-        _context = context;
+        _unitOfWork = unitOfWork;
         _tournamentRepository = tournamentRepository;
         _memberRepository = memberRepository;
         _matchRepository = matchRepository;
@@ -126,49 +125,66 @@ public class TournamentService : ITournamentService
 
     public async Task<ServiceResult> JoinAsync(Guid tournamentId, int walkerId, string walkerName, CancellationToken ct = default)
     {
-        var tournament = await _tournamentRepository.GetByIdAsync(tournamentId, ct);
-        if (tournament == null)
+        // Use UnitOfWork transaction to prevent race condition on MaxParticipants check
+        await _unitOfWork.BeginTransactionAsync(ct);
+        try
         {
-            return new ServiceResult(false, Error: "Tournament not found");
+            var tournament = await _tournamentRepository.GetByIdAsync(tournamentId, ct);
+            if (tournament == null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return new ServiceResult(false, Error: "Tournament not found");
+            }
+
+            if (tournament.Status != TournamentStatus.Open)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return new ServiceResult(false, Error: "Tournament is not open for registration");
+            }
+
+            if (DateTime.UtcNow > tournament.JoinDeadline)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return new ServiceResult(false, Error: "Registration deadline has passed");
+            }
+
+            // Use repository method for accurate count within transaction
+            var currentCount = await _memberRepository.GetCountByTournamentAsync(tournamentId, ct);
+            if (currentCount >= tournament.MaxParticipants)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return new ServiceResult(false, Error: "Tournament is full");
+            }
+
+            // Check for duplicate (WalkerId + WalkerName combination)
+            var exists = await _memberRepository.ExistsAsync(tournamentId, walkerId, walkerName, ct);
+            if (exists)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return new ServiceResult(false, Error: "This walker is already registered for this tournament");
+            }
+
+            var member = new TournamentMember
+            {
+                Id = Guid.NewGuid(),
+                TournamentId = tournamentId,
+                WalkerId = walkerId,
+                WalkerName = walkerName,
+                JoinedAt = DateTime.UtcNow,
+                XpEarned = 0
+            };
+
+            await _memberRepository.AddAsync(member, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+            await _unitOfWork.CommitAsync(ct);
+
+            return new ServiceResult(true);
         }
-
-        if (tournament.Status != TournamentStatus.Open)
+        catch
         {
-            return new ServiceResult(false, Error: "Tournament is not open for registration");
+            await _unitOfWork.RollbackAsync(ct);
+            throw;
         }
-
-        if (DateTime.UtcNow > tournament.JoinDeadline)
-        {
-            return new ServiceResult(false, Error: "Registration deadline has passed");
-        }
-
-        // Check for max participants
-        if (tournament.Members.Count >= tournament.MaxParticipants)
-        {
-            return new ServiceResult(false, Error: "Tournament is full");
-        }
-
-        // Check for duplicate (WalkerId + WalkerName combination)
-        var exists = await _memberRepository.ExistsAsync(tournamentId, walkerId, walkerName, ct);
-        if (exists)
-        {
-            return new ServiceResult(false, Error: "This walker is already registered for this tournament");
-        }
-
-        var member = new TournamentMember
-        {
-            Id = Guid.NewGuid(),
-            TournamentId = tournamentId,
-            WalkerId = walkerId,
-            WalkerName = walkerName,
-            JoinedAt = DateTime.UtcNow,
-            XpEarned = 0
-        };
-
-        await _memberRepository.AddAsync(member, ct);
-        await _memberRepository.SaveChangesAsync(ct);
-
-        return new ServiceResult(true);
     }
 
     public async Task<ServiceResult> LockAsync(Guid tournamentId, CancellationToken ct = default)
@@ -202,30 +218,44 @@ public class TournamentService : ITournamentService
 
     public async Task<ServiceResult> DrawAsync(Guid tournamentId, CancellationToken ct = default)
     {
-        var tournament = await _tournamentRepository.GetByIdWithMembersAsync(tournamentId, ct);
-        if (tournament == null)
+        // Use UnitOfWork transaction to ensure atomic bracket generation
+        await _unitOfWork.BeginTransactionAsync(ct);
+        try
         {
-            return new ServiceResult(false, Error: "Tournament not found");
-        }
+            var tournament = await _tournamentRepository.GetByIdWithMembersAsync(tournamentId, ct);
+            if (tournament == null)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return new ServiceResult(false, Error: "Tournament not found");
+            }
 
-        if (tournament.Status != TournamentStatus.Locked)
+            if (tournament.Status != TournamentStatus.Locked)
+            {
+                await _unitOfWork.RollbackAsync(ct);
+                return new ServiceResult(false, Error: "Tournament must be locked before drawing");
+            }
+
+            var participants = tournament.Members.ToList();
+            var matches = _bracketStrategy.GenerateBracket(tournamentId, participants);
+
+            await _matchRepository.AddRangeAsync(matches, ct);
+
+            tournament.Status = TournamentStatus.InProgress;
+            tournament.UpdatedAt = DateTime.UtcNow;
+
+            await _tournamentRepository.UpdateAsync(tournament, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+            await _unitOfWork.CommitAsync(ct);
+
+            await _auditLogService.LogAsync(tournament.CreatedByUserId, "Draw", "Tournament", tournament.Id, ct);
+
+            return new ServiceResult(true);
+        }
+        catch
         {
-            return new ServiceResult(false, Error: "Tournament must be locked before drawing");
+            await _unitOfWork.RollbackAsync(ct);
+            throw;
         }
-
-        var participants = tournament.Members.ToList();
-        var matches = _bracketStrategy.GenerateBracket(tournamentId, participants);
-
-        await _matchRepository.AddRangeAsync(matches, ct);
-
-        tournament.Status = TournamentStatus.InProgress;
-        tournament.UpdatedAt = DateTime.UtcNow;
-
-        await _tournamentRepository.UpdateAsync(tournament, ct);
-        await _context.SaveChangesAsync(ct);
-
-        await _auditLogService.LogAsync(tournament.CreatedByUserId, "Draw", "Tournament", tournament.Id, ct);
-
-        return new ServiceResult(true);
     }
 }
+

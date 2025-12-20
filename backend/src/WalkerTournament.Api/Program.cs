@@ -84,6 +84,8 @@ builder.Services.AddScoped<ITournamentRepository, TournamentRepository>();
 builder.Services.AddScoped<ITournamentMemberRepository, TournamentMemberRepository>();
 builder.Services.AddScoped<IMatchRepository, MatchRepository>();
 builder.Services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+
 
 // Register services
 builder.Services.AddScoped<IAuthService, AuthService>();

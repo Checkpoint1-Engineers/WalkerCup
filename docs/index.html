@@ -57,6 +57,92 @@
                 </div>
             </section>
 
+            <section id="prerequisites">
+                <h2>Prerequisites</h2>
+                <ul class="tech-list">
+                    <li><strong>.NET 9.0 SDK</strong> or later</li>
+                    <li><strong>Node.js</strong> 18+ and npm</li>
+                    <li><strong>Git</strong> for version control</li>
+                    <li><strong>SQLite</strong> (included with .NET)</li>
+                </ul>
+            </section>
+
+            <section id="getting-started">
+                <h2>Getting Started</h2>
+
+                <h3>Backend Setup</h3>
+                <ol class="step-list">
+                    <li>
+                        <strong>Navigate to the backend directory</strong>
+                        <pre>cd backend/src/WalkerTournament.Api</pre>
+                    </li>
+                    <li>
+                        <strong>Configure JWT Secret</strong>
+                        <pre>dotnet user-secrets init
+dotnet user-secrets set "Jwt:SecretKey" "your-super-secret-key-minimum-32-characters-long"</pre>
+                    </li>
+                    <li>
+                        <strong>Apply Database Migrations</strong>
+                        <pre>dotnet ef database update</pre>
+                    </li>
+                    <li>
+                        <strong>Run the Backend</strong>
+                        <pre>dotnet run</pre>
+                        <p>The API will be available at <code>https://localhost:5001</code> (or
+                            <code>http://localhost:5000</code>)</p>
+                    </li>
+                </ol>
+
+                <h3>Frontend Setup</h3>
+                <ol class="step-list">
+                    <li>
+                        <strong>Navigate to the frontend directory</strong>
+                        <pre>cd frontend</pre>
+                    </li>
+                    <li>
+                        <strong>Install Dependencies</strong>
+                        <pre>npm install</pre>
+                    </li>
+                    <li>
+                        <strong>Configure API Endpoint</strong>
+                        <p>Edit <code>src/lib/api.js</code> to set the correct backend URL:</p>
+                        <pre>const API_BASE_URL = 'https://localhost:5001';</pre>
+                    </li>
+                    <li>
+                        <strong>Run the Development Server</strong>
+                        <pre>npm run dev</pre>
+                        <p>The frontend will be available at <code>http://localhost:5173</code></p>
+                    </li>
+                </ol>
+            </section>
+
+            <section id="configuration">
+                <h2>Configuration Files</h2>
+
+                <h3>Backend: <code>appsettings.json</code></h3>
+                <pre>{
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=walkertournament.db"
+  },
+  "Jwt": {
+    "Issuer": "WalkerTournamentAPI",
+    "Audience": "WalkerTournamentClients",
+    "ExpiryMinutes": 60
+  }
+}</pre>
+                <div class="alert alert-warning">
+                    <strong>Important:</strong> The <code>Jwt:SecretKey</code> is stored in user secrets for security,
+                    not in appsettings.json.
+                </div>
+
+                <h3>Frontend: <code>src/lib/api.js</code></h3>
+                <p>Update the <code>API_BASE_URL</code> constant to match your backend URL:</p>
+                <ul>
+                    <li>Development: <code>https://localhost:5001</code></li>
+                    <li>Production: Your deployed API URL</li>
+                </ul>
+            </section>
+
             <section id="workflow">
                 <h2>Core Workflows</h2>
                 <h3>1. The Tournament Loop</h3>
