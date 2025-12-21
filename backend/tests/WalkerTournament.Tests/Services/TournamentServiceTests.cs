@@ -4,7 +4,7 @@ using WalkerTournament.Api.Entities;
 using WalkerTournament.Api.Repositories;
 using WalkerTournament.Api.Services;
 
-namespace WalkerTournament.Tests;
+namespace WalkerTournament.Tests.Services;
 
 public class TournamentServiceTests
 {
@@ -68,7 +68,8 @@ public class TournamentServiceTests
             Id = tournamentId,
             Status = TournamentStatus.Open,
             JoinDeadline = DateTime.UtcNow.AddDays(1),
-            Name = "Test Tournament"
+            Name = "Test Tournament",
+            MaxParticipants = 10
         };
 
         _tournamentRepoMock.Setup(r => r.GetByIdAsync(tournamentId, It.IsAny<CancellationToken>()))
@@ -124,5 +125,34 @@ public class TournamentServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Registration deadline has passed", result.Error);
+    }
+
+    [Fact]
+    public async Task JoinAsync_ShouldFail_WhenTournamentIsFull()
+    {
+        // Arrange
+        var tournamentId = Guid.NewGuid();
+        var tournament = new Tournament
+        {
+            Id = tournamentId,
+            Status = TournamentStatus.Open,
+            JoinDeadline = DateTime.UtcNow.AddDays(1),
+            Name = "Full Tournament",
+            MaxParticipants = 2
+        };
+        
+        // Simulate 2 existing members
+        tournament.Members.Add(new TournamentMember { Id = Guid.NewGuid() });
+        tournament.Members.Add(new TournamentMember { Id = Guid.NewGuid() });
+
+        _tournamentRepoMock.Setup(r => r.GetByIdAsync(tournamentId, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(tournament);
+
+        // Act
+        var result = await _service.JoinAsync(tournamentId, 1, "NewWalker");
+
+        // Assert
+        Assert.False(result.Success);
+        Assert.Equal("Tournament is full", result.Error);
     }
 }
