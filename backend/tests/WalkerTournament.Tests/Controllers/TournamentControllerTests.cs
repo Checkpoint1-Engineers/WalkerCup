@@ -93,7 +93,7 @@ public class TournamentControllerTests
     }
 
     [Fact]
-    public async Task Join_ShouldReturnBadRequest_WhenFull()
+    public async Task Join_ShouldReturnConflict_WhenFull()
     {
         // Arrange
         var request = new JoinTournamentRequest(123, "Walker1");
@@ -104,8 +104,8 @@ public class TournamentControllerTests
         var result = await _controller.Join(Guid.NewGuid(), request, CancellationToken.None);
 
         // Assert
-        var badRequest = Assert.IsType<BadRequestObjectResult>(result);
-        var error = Assert.IsType<ErrorResponse>(badRequest.Value);
+        var conflictResult = Assert.IsType<ConflictObjectResult>(result);
+        var error = Assert.IsType<ErrorResponse>(conflictResult.Value);
         Assert.Equal("Tournament is full", error.Error);
     }
 }

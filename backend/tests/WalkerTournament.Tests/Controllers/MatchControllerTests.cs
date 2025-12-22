@@ -53,7 +53,7 @@ public class MatchControllerTests
         var request = new SetWinnerRequest(Guid.NewGuid());
         _serviceMock.Setup(s => s.SetWinnerAsync(
             It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceResult(false, Error: "Concurrency error: ..."));
+            .ReturnsAsync(new ServiceResult(false, Error: "Match was modified by another user."));
 
         // Act
         var result = await _controller.SetWinner(Guid.NewGuid(), request, CancellationToken.None);
@@ -61,7 +61,7 @@ public class MatchControllerTests
         // Assert
         var conflictResult = Assert.IsType<ConflictObjectResult>(result);
         var error = Assert.IsType<ErrorResponse>(conflictResult.Value);
-        Assert.Contains("Concurrency", error.Error);
+        Assert.Contains("modified by another user", error.Error);
     }
 
     [Fact]
@@ -71,7 +71,7 @@ public class MatchControllerTests
         var request = new SetWinnerRequest(Guid.NewGuid());
         _serviceMock.Setup(s => s.SetWinnerAsync(
             It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ServiceResult(false, Error: "Match not found"));
+            .ReturnsAsync(new ServiceResult(false, Error: "Invalid winner"));
 
         // Act
         var result = await _controller.SetWinner(Guid.NewGuid(), request, CancellationToken.None);
@@ -79,6 +79,6 @@ public class MatchControllerTests
         // Assert
         var badRequest = Assert.IsType<BadRequestObjectResult>(result);
         var error = Assert.IsType<ErrorResponse>(badRequest.Value);
-        Assert.Equal("Match not found", error.Error);
+        Assert.Equal("Invalid winner", error.Error);
     }
 }
