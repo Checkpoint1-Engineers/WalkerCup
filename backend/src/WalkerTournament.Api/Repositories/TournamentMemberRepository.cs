@@ -42,6 +42,11 @@ public class TournamentMemberRepository : ITournamentMemberRepository
             .CountAsync(m => m.TournamentId == tournamentId, ct);
     }
 
+    public async Task<TournamentMember?> GetByWalkerIdAsync(Guid tournamentId, int walkerId, CancellationToken ct = default)
+    {
+        return await _context.TournamentMembers
+            .FirstOrDefaultAsync(m => m.TournamentId == tournamentId && m.WalkerId == walkerId, ct);
+    }
 
     public async Task AddAsync(TournamentMember member, CancellationToken ct = default)
     {
@@ -51,6 +56,12 @@ public class TournamentMemberRepository : ITournamentMemberRepository
     public async Task UpdateAsync(TournamentMember member, CancellationToken ct = default)
     {
         _context.TournamentMembers.Update(member);
+        await Task.CompletedTask;
+    }
+
+    public async Task DeleteAsync(TournamentMember member, CancellationToken ct = default)
+    {
+        _context.TournamentMembers.Remove(member);
         await Task.CompletedTask;
     }
 

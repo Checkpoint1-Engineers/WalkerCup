@@ -13,7 +13,10 @@ public interface ITournamentMemberRepository
     /// </summary>
     Task<int> GetCountByTournamentAsync(Guid tournamentId, CancellationToken ct = default);
     
+    Task<TournamentMember?> GetByWalkerIdAsync(Guid tournamentId, int walkerId, CancellationToken ct = default);
+    
     Task AddAsync(TournamentMember member, CancellationToken ct = default);
     Task UpdateAsync(TournamentMember member, CancellationToken ct = default);
+    Task DeleteAsync(TournamentMember member, CancellationToken ct = default);
     Task SaveChangesAsync(CancellationToken ct = default);
 }
