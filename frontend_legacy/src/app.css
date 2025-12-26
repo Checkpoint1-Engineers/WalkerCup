@@ -1,0 +1,67 @@
+:root {
+    /* Holographic / Deep Space Palette */
+    --wow-bg: #020b14;
+    /* Darker, Deep Space Blue */
+    --wow-panel: rgba(6, 22, 33, 0.7);
+    /* Glass Panel */
+    --wow-border: rgba(0, 243, 255, 0.1);
+
+    --wow-cyan: #00f3ff;
+    /* Neon Cyan */
+    --wow-teal: #00d4e0;
+    /* Muted Teal for secondary */
+
+    --wow-text-head: #ffffff;
+    --wow-text-body: #a0b6c5;
+    --wow-text-muted: #5a6b7c;
+
+    --wow-font-display: 'Orbitron', sans-serif;
+    --wow-font-body: 'Orbitron', sans-serif;
+}
+
+body {
+    background-color: var(--wow-bg);
+    background-image:
+        radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.05) 0%, transparent 50%),
+        linear-gradient(to bottom, #020b14 0%, #010508 100%);
+    color: var(--wow-text-head);
+    font-family: var(--wow-font-body);
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #1a2633;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--wow-cyan);
+}
+
+a {
+    text-decoration: none;
+    color: inherit;
+}
+
+button {
+    font-family: var(--wow-font-display);
+}
+
+.glass-panel {
+    background: var(--wow-panel);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--wow-border);
+    border-radius: 4px;
+}
