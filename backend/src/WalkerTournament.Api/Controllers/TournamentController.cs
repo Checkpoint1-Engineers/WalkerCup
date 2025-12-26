@@ -179,7 +179,7 @@ public class TournamentController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Join(Guid id, [FromBody] JoinTournamentRequest request, CancellationToken ct)
     {
-        var result = await _tournamentService.JoinAsync(id, request.WalkerId, request.WalkerName, ct);
+        var result = await _tournamentService.JoinAsync(id, request.WalkerId, request.WalkerName, request.Email, ct);
         if (!result.Success)
         {
             if (result.Error == "Tournament not found")
@@ -193,6 +193,25 @@ public class TournamentController : ControllerBase
             return BadRequest(new ErrorResponse(result.Error!));
         }
         return Ok(new { message = "Successfully joined tournament" });
+    }
+
+    /// <summary>
+    /// Remove a member from the tournament (TeamAlan only)
+    /// </summary>
+    [HttpDelete("{id:guid}/members/{walkerId:int}")]
+    [Authorize(Roles = "TeamAlan")]
+    public async Task<IActionResult> RemoveMember(Guid id, int walkerId, CancellationToken ct)
+    {
+        var result = await _tournamentService.RemoveMemberAsync(id, walkerId, ct);
+        if (!result.Success)
+        {
+            if (result.Error == "Tournament not found" || result.Error == "Member not found in this tournament")
+            {
+                return NotFound(new ErrorResponse(result.Error!));
+            }
+            return BadRequest(new ErrorResponse(result.Error!));
+        }
+        return Ok(new { message = "Member removed successfully" });
     }
 
 

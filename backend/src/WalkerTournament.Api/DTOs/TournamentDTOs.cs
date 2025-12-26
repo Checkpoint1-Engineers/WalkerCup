@@ -16,7 +16,8 @@ public record ExtendDeadlineRequest([Required] DateTime NewDeadline);
 
 public record JoinTournamentRequest(
     [Required] int WalkerId,
-    [Required][MaxLength(100)] string WalkerName
+    [Required][MaxLength(100)] string WalkerName,
+    [Required][EmailAddress] string Email
 );
 
 public record TournamentResponse(
