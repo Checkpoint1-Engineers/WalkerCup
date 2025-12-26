@@ -6,6 +6,7 @@ public class TournamentMember
     public Guid TournamentId { get; set; }
     public int WalkerId { get; set; }
     public string WalkerName { get; set; } = null!;
+    public string? Email { get; set; }
     public DateTime JoinedAt { get; set; }
     public DateTime? EliminatedAt { get; set; }
     public int XpEarned { get; set; }
