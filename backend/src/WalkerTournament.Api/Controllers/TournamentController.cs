@@ -143,6 +143,10 @@ public class TournamentController : ControllerBase
         var result = await _tournamentService.OpenAsync(id, ct);
         if (!result.Success)
         {
+            if (result.Error == "Tournament not found")
+            {
+                return NotFound(new ErrorResponse(result.Error!));
+            }
             return BadRequest(new ErrorResponse(result.Error!));
         }
         return Ok(new { message = "Tournament opened successfully" });
@@ -158,6 +162,10 @@ public class TournamentController : ControllerBase
         var result = await _tournamentService.ExtendDeadlineAsync(id, request.NewDeadline, ct);
         if (!result.Success)
         {
+            if (result.Error == "Tournament not found")
+            {
+                return NotFound(new ErrorResponse(result.Error!));
+            }
             return BadRequest(new ErrorResponse(result.Error!));
         }
         return Ok(new { message = "Deadline extended successfully" });
@@ -171,13 +179,41 @@ public class TournamentController : ControllerBase
     [AllowAnonymous]
     public async Task<IActionResult> Join(Guid id, [FromBody] JoinTournamentRequest request, CancellationToken ct)
     {
-        var result = await _tournamentService.JoinAsync(id, request.WalkerId, request.WalkerName, ct);
+        var result = await _tournamentService.JoinAsync(id, request.WalkerId, request.WalkerName, request.Email, ct);
         if (!result.Success)
         {
+            if (result.Error == "Tournament not found")
+            {
+                return NotFound(new ErrorResponse(result.Error!));
+            }
+            if (result.Error == "Tournament is full" || result.Error!.Contains("already registered"))
+            {
+                return Conflict(new ErrorResponse(result.Error!));
+            }
             return BadRequest(new ErrorResponse(result.Error!));
         }
         return Ok(new { message = "Successfully joined tournament" });
     }
+
+    /// <summary>
+    /// Remove a member from the tournament (TeamAlan only)
+    /// </summary>
+    [HttpDelete("{id:guid}/members/{walkerId:int}")]
+    [Authorize(Roles = "TeamAlan")]
+    public async Task<IActionResult> RemoveMember(Guid id, int walkerId, CancellationToken ct)
+    {
+        var result = await _tournamentService.RemoveMemberAsync(id, walkerId, ct);
+        if (!result.Success)
+        {
+            if (result.Error == "Tournament not found" || result.Error == "Member not found in this tournament")
+            {
+                return NotFound(new ErrorResponse(result.Error!));
+            }
+            return BadRequest(new ErrorResponse(result.Error!));
+        }
+        return Ok(new { message = "Member removed successfully" });
+    }
+
 
     /// <summary>
     /// Lock tournament for drawing (TeamAlan only)
@@ -189,6 +225,10 @@ public class TournamentController : ControllerBase
         var result = await _tournamentService.LockAsync(id, ct);
         if (!result.Success)
         {
+            if (result.Error == "Tournament not found")
+            {
+                return NotFound(new ErrorResponse(result.Error!));
+            }
             return BadRequest(new ErrorResponse(result.Error!));
         }
         return Ok(new { message = "Tournament locked successfully" });
@@ -204,6 +244,10 @@ public class TournamentController : ControllerBase
         var result = await _tournamentService.DrawAsync(id, ct);
         if (!result.Success)
         {
+            if (result.Error == "Tournament not found")
+            {
+                return NotFound(new ErrorResponse(result.Error!));
+            }
             return BadRequest(new ErrorResponse(result.Error!));
         }
         return Ok(new { message = "Bracket generated successfully" });

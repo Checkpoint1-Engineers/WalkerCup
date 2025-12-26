@@ -14,7 +14,7 @@ public class MatchServiceTests
     private readonly Mock<ITournamentMemberRepository> _memberRepoMock;
     private readonly Mock<ITournamentRepository> _tournamentRepoMock;
     private readonly Mock<IAuditLogService> _logServiceMock;
-    private readonly Mock<AppDbContext> _dbContextMock;
+    private readonly Mock<IDbTransactionScope> _transactionScopeMock;
     private readonly MatchService _service;
 
     public MatchServiceTests()
@@ -23,10 +23,20 @@ public class MatchServiceTests
         _memberRepoMock = new Mock<ITournamentMemberRepository>();
         _tournamentRepoMock = new Mock<ITournamentRepository>();
         _logServiceMock = new Mock<IAuditLogService>();
-        _dbContextMock = new Mock<AppDbContext>(new DbContextOptions<AppDbContext>());
+        _transactionScopeMock = new Mock<IDbTransactionScope>();
+
+        // Setup transaction scope to return successfully by default
+        _transactionScopeMock.Setup(t => t.BeginTransactionAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _transactionScopeMock.Setup(t => t.CommitAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _transactionScopeMock.Setup(t => t.RollbackAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _transactionScopeMock.Setup(t => t.SaveChangesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(1);
 
         _service = new MatchService(
-            _dbContextMock.Object,
+            _transactionScopeMock.Object,
             _matchRepoMock.Object,
             _memberRepoMock.Object,
             _tournamentRepoMock.Object,
@@ -47,6 +57,7 @@ public class MatchServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Match not found", result.Error);
+        _transactionScopeMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -66,6 +77,7 @@ public class MatchServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Tournament is not in progress", result.Error);
+        _transactionScopeMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -89,5 +101,6 @@ public class MatchServiceTests
         // Assert
         Assert.False(result.Success);
         Assert.Equal("Winner must be one of the match participants", result.Error);
+        _transactionScopeMock.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 }

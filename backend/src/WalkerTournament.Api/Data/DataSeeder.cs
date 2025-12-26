@@ -150,6 +150,7 @@ public class DataSeeder
                 TournamentId = t.Id,
                 WalkerId = _random.Next(10000, 99999),
                 WalkerName = u.Email.Split('@')[0], // Use email handle as name
+                Email = u.Email,
                 JoinedAt = DateTime.UtcNow,
                 Tournament = t
             };

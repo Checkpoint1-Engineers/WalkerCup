@@ -1,5 +1,5 @@
 <script>
-    import TournamentCard from "./TournamentCard.svelte";
+    import TournamentCard from "$lib/components/TournamentCard.svelte";
     export let tournaments = [];
 </script>
 

@@ -1,29 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Michroma&family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap');
+
 :root {
-    /* Holographic / Deep Space Palette */
-    --wow-bg: #020b14;
-    /* Darker, Deep Space Blue */
-    --wow-panel: rgba(6, 22, 33, 0.7);
-    /* Glass Panel */
-    --wow-border: rgba(0, 243, 255, 0.1);
+    /* New Centralized Palette - Verified */
+    --wow-bg: #000c14;
+    --wow-secondary: #052c3d;
+    --wow-primary: #05829c;
+    --wow-white: #ffffff;
 
-    --wow-cyan: #00f3ff;
-    /* Neon Cyan */
-    --wow-teal: #00d4e0;
-    /* Muted Teal for secondary */
+    --wow-panel: rgba(5, 44, 61, 0.7);
+    --wow-border: rgba(5, 130, 156, 0.2);
 
-    --wow-text-head: #ffffff;
-    --wow-text-body: #a0b6c5;
-    --wow-text-muted: #5a6b7c;
+    --wow-cyan: var(--wow-primary);
+    --wow-text-head: var(--wow-white);
+    --wow-text-body: rgba(255, 255, 255, 0.9);
+    --wow-text-muted: rgba(255, 255, 255, 0.5);
 
-    --wow-font-display: 'Orbitron', sans-serif;
-    --wow-font-body: 'Orbitron', sans-serif;
+    --wow-font-display: 'Michroma', sans-serif;
+    --wow-font-body: 'Plus Jakarta Sans', sans-serif;
+
+    /* Architecture Tokens */
+    --wow-transition-fast: 0.2s;
+    --wow-transition-base: 0.3s;
+    --wow-transition-slow: 0.5s;
+    --wow-ease-out: cubic-bezier(0.165, 0.84, 0.44, 1);
+
+    /* Z-Index Scale */
+    --z-background: -1;
+    --z-base: 1;
+    --z-card: 10;
+    --z-nav: 1000;
+    --z-nav-overlay: 2000;
+    --z-popup: 3000;
+
+    /* Spacing System */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 1rem;
+    --space-4: 1.5rem;
+    --space-5: 2rem;
+    --space-6: 3rem;
+    --space-8: 4rem;
 }
 
 body {
     background-color: var(--wow-bg);
-    background-image:
-        radial-gradient(circle at 50% 0%, rgba(0, 243, 255, 0.05) 0%, transparent 50%),
-        linear-gradient(to bottom, #020b14 0%, #010508 100%);
     color: var(--wow-text-head);
     font-family: var(--wow-font-body);
     margin: 0;
@@ -32,9 +52,47 @@ body {
     -webkit-font-smoothing: antialiased;
 }
 
+/* --- UTILITIES --- */
+
+/* Glassmorphism Variants */
+.glass-ui {
+    background: var(--wow-panel);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--wow-border);
+    border-radius: 4px;
+}
+
+.glass-ui-heavy {
+    background: rgba(2, 11, 20, 0.9);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Layout Utilities */
+.flex-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.abs-inset {
+    position: absolute;
+    inset: 0;
+}
+
+.cyber-grid {
+    background-image:
+        linear-gradient(var(--wow-border) 1px, transparent 1px),
+        linear-gradient(90deg, var(--wow-border) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
+    height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -57,6 +115,7 @@ a {
 
 button {
     font-family: var(--wow-font-display);
+    cursor: pointer;
 }
 
 .glass-panel {

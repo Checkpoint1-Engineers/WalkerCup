@@ -159,6 +159,9 @@ namespace WalkerTournament.Api.Migrations
                     b.Property<DateTime?>("EliminatedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("JoinedAt")
                         .HasColumnType("TEXT");
 
