@@ -12,7 +12,8 @@ public interface ITournamentService
     Task<ServiceResult<IReadOnlyList<Tournament>>> ListAsync(CancellationToken ct = default);
     Task<ServiceResult> OpenAsync(Guid tournamentId, CancellationToken ct = default);
     Task<ServiceResult> ExtendDeadlineAsync(Guid tournamentId, DateTime newDeadline, CancellationToken ct = default);
-    Task<ServiceResult> JoinAsync(Guid tournamentId, int walkerId, string walkerName, CancellationToken ct = default);
+    Task<ServiceResult> JoinAsync(Guid tournamentId, int walkerId, string walkerName, string email, CancellationToken ct = default);
+    Task<ServiceResult> RemoveMemberAsync(Guid tournamentId, int walkerId, CancellationToken ct = default);
     Task<ServiceResult> LockAsync(Guid tournamentId, CancellationToken ct = default);
     Task<ServiceResult> DrawAsync(Guid tournamentId, CancellationToken ct = default);
 }
