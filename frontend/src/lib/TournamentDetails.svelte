@@ -1,13 +1,25 @@
 <script>
     import { onMount } from "svelte";
     import { api } from "./api.js";
-    import { navigate } from "./router.js";
+    import { goto } from "$app/navigation";
+    import BracketVisualizer from "./BracketVisualizer.svelte";
+    import JoinTournamentModal from "$lib/components/JoinTournamentModal.svelte";
 
     export let tournament;
 
     let activeTab = "BRIEF"; // BRIEF | BRACKET | ROSTER
     let details = null;
     let loading = true;
+    let showJoinModal = false;
+
+    function handleJoinSuccess() {
+        // Reload details to show new member
+        loading = true;
+        api.tournaments.get(tournament.id).then((data) => {
+            details = data;
+            loading = false;
+        });
+    }
 
     // derived
     $: bgImage = tournament?.imageUrl || "";
@@ -30,8 +42,31 @@
         }
     });
 
+    import { auth } from "$lib/stores/auth";
+
     function goBack() {
-        navigate("/recruiting"); // Default fallback
+        goto("/recruiting"); // Default fallback
+    }
+
+    async function handleSetWinner(matchId, winnerId) {
+        if (!confirm("CONFIRM WINNER SELECTION?")) return;
+        try {
+            await api.matches.setWinner(matchId, winnerId);
+            // Refresh
+            handleJoinSuccess(); // Reuses the reload logic
+        } catch (e) {
+            alert("SET WINNER FAILED: " + e.message);
+        }
+    }
+
+    async function handleRemoveMember(walkerId) {
+        if (!confirm("CONFIRM REMOVAL OF WALKER?")) return;
+        try {
+            await api.tournaments.removeMember(tournament.id, walkerId);
+            handleJoinSuccess();
+        } catch (e) {
+            alert("REMOVAL FAILED: " + e.message);
+        }
     }
 </script>
 
@@ -82,58 +117,150 @@
                 <div class="brief-content">
                     <h3 class="panel-header">OPERATION OVERVIEW</h3>
                     <p class="desc">
-                        Get ready for the ultimate showdown. This tournament
-                        pits the best Walkers against each other. Prepare your
-                        loadouts and sync your drones.
+                        {details?.description ||
+                            "NO MISSION BRIEFING PROVIDED FOR THIS OPERATION."}
                     </p>
 
                     <div class="stats-hud">
                         <div class="hud-item entry">
-                            <span class="hud-label">ENTRY FEE</span>
+                            <span class="hud-label">XP PER WIN</span>
                             <span class="hud-val"
-                                >{details?.entryFee || 0} WC</span
+                                >{details?.xpPerWin || 0} XP</span
                             >
                         </div>
                         <div class="hud-item prize">
-                            <span class="hud-label">PRIZE POOL</span>
+                            <span class="hud-label">SQUAD CAP</span>
                             <span class="hud-val gold"
-                                >{details?.prizePool || 0} WC</span
+                                >{details?.maxParticipants || 16}</span
                             >
                         </div>
                         <div class="hud-item players">
-                            <span class="hud-label">OPERATIVES</span>
+                            <span class="hud-label">ACTIVE ROSTER</span>
                             <span class="hud-val"
-                                >{details?.maxParticipants || 16} MAX</span
+                                >{details?.memberCount || 0}</span
                             >
                         </div>
                     </div>
                 </div>
 
                 <div class="action-area">
-                    <button class="join-btn">
-                        <span class="btn-text">JOIN MISSION</span>
-                        <div class="btn-glitch"></div>
-                    </button>
+                    {#if tournament.status === 1}
+                        <button
+                            class="join-btn"
+                            on:click={() => (showJoinModal = true)}
+                        >
+                            <span class="btn-text">JOIN MISSION</span>
+                            <div class="btn-glitch"></div>
+                        </button>
+                    {:else}
+                        <button
+                            class="join-btn"
+                            disabled
+                            style="opacity: 0.5; cursor: not-allowed;"
+                        >
+                            <span class="btn-text">RECRUITMENT CLOSED</span>
+                        </button>
+                    {/if}
                     <p class="terms">
                         By joining, you accept the Walker Protocol.
                     </p>
                 </div>
             </div>
+
+            <JoinTournamentModal
+                isOpen={showJoinModal}
+                tournamentId={tournament.id}
+                tournamentName={tournament.title}
+                on:close={() => (showJoinModal = false)}
+                on:success={handleJoinSuccess}
+            />
         {:else if activeTab === "BRACKET"}
             <div class="panel">
                 <h3 class="panel-header">TOURNAMENT BRACKET</h3>
-                <div class="bracket-placeholder">
-                    NO ACTIVE BRACKET DATA FOUND.
-                </div>
+                {#if details?.matches && details.matches.length > 0}
+                    <BracketVisualizer matches={details.matches} />
+
+                    <!-- ADMIN ACTIONS FOR MATCHES -->
+                    {#if $auth.user?.role === "TeamAlan"}
+                        <div class="admin-match-controls">
+                            <h4>ADMIN OVERRIDE PROTOCOLS</h4>
+                            <div class="match-list">
+                                {#each details.matches as m}
+                                    <div class="match-item">
+                                        <span
+                                            >MATCH #{m.matchId.substring(0, 6)}: {m.player1Name ||
+                                                "TBD"} vs {m.player2Name ||
+                                                "TBD"}</span
+                                        >
+                                        {#if !m.winnerId && m.player1Id && m.player2Id}
+                                            <div class="match-actions">
+                                                <button
+                                                    class="win-btn"
+                                                    on:click={() =>
+                                                        handleSetWinner(
+                                                            m.matchId,
+                                                            m.player1Id,
+                                                        )}
+                                                    >WIN: {m.player1Name}</button
+                                                >
+                                                <button
+                                                    class="win-btn"
+                                                    on:click={() =>
+                                                        handleSetWinner(
+                                                            m.matchId,
+                                                            m.player2Id,
+                                                        )}
+                                                    >WIN: {m.player2Name}</button
+                                                >
+                                            </div>
+                                        {:else if m.winnerId}
+                                            <span class="winner-tag"
+                                                >WINNER: {m.winnerId ===
+                                                m.player1Id
+                                                    ? m.player1Name
+                                                    : m.player2Name}</span
+                                            >
+                                        {/if}
+                                    </div>
+                                {/each}
+                            </div>
+                        </div>
+                    {/if}
+                {:else}
+                    <div class="bracket-placeholder">
+                        NO ACTIVE BRACKET DATA FOUND.
+                    </div>
+                {/if}
             </div>
         {:else if activeTab === "ROSTER"}
             <div class="panel">
                 <h3 class="panel-header">REGISTERED WALKERS</h3>
-                <ul class="roster-list">
-                    <li>Alan Walker #1</li>
-                    <li>Walker #2492</li>
-                    <li>Walker #9999</li>
-                </ul>
+                {#if details?.members && details.members.length > 0}
+                    <ul class="roster-list">
+                        {#each details.members as member}
+                            <li>
+                                <span>
+                                    {member.walkerName}
+                                    <span class="walker-id"
+                                        >#{member.walkerId}</span
+                                    >
+                                </span>
+                                {#if $auth.user?.role === "TeamAlan" && (tournament.status === 0 || tournament.status === 1)}
+                                    <button
+                                        class="remove-btn"
+                                        on:click={() =>
+                                            handleRemoveMember(member.walkerId)}
+                                        >REMOVE</button
+                                    >
+                                {/if}
+                            </li>
+                        {/each}
+                    </ul>
+                {:else}
+                    <div class="bracket-placeholder">
+                        NO WALKERS REGISTERED.
+                    </div>
+                {/if}
             </div>
         {/if}
     </div>
@@ -284,11 +411,11 @@
     /* STATS HUD - GLASS TERMINAL STYLE */
     .stats-hud {
         display: flex;
-        gap: 2rem;
-        margin-bottom: 3rem;
-        background: rgba(2, 11, 20, 0.6);
+        gap: var(--space-5);
+        margin-bottom: var(--space-6);
+        background: var(--wow-secondary);
         border: 1px solid rgba(0, 243, 255, 0.1);
-        padding: 2.5rem;
+        padding: var(--space-5);
         border-radius: 12px;
         backdrop-filter: blur(12px);
         box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
@@ -375,6 +502,36 @@
         opacity: 0.6;
     }
 
+    /* ROSTER */
+    .roster-list {
+        list-style: none;
+        padding: 0;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    .roster-list li {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: var(--space-3);
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: all var(--wow-transition-base) var(--wow-ease-out);
+    }
+    .roster-list li:hover {
+        background: rgba(0, 243, 255, 0.05);
+        border-color: rgba(0, 243, 255, 0.2);
+        transform: translateY(-2px);
+    }
+    .walker-id {
+        font-family: monospace;
+        color: var(--wow-cyan);
+        font-size: 0.8rem;
+        opacity: 0.7;
+    }
+
     .loader-box {
         text-align: center;
         padding: 4rem;
@@ -390,5 +547,57 @@
         to {
             opacity: 1;
         }
+    }
+
+    /* ADMIN CONTROLS */
+    .admin-match-controls {
+        margin-top: 2rem;
+        padding-top: 2rem;
+        border-top: 1px dashed rgba(255, 0, 0, 0.3);
+    }
+    .admin-match-controls h4 {
+        color: #ff3e3e;
+        font-family: var(--wow-font-display);
+        letter-spacing: 2px;
+        margin-bottom: 1rem;
+    }
+    .match-item {
+        background: rgba(255, 0, 0, 0.05);
+        border: 1px solid rgba(255, 0, 0, 0.2);
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .win-btn {
+        background: rgba(255, 0, 0, 0.2);
+        border: 1px solid #ff3e3e;
+        color: #ff3e3e;
+        padding: 0.3rem 0.8rem;
+        margin-left: 0.5rem;
+        cursor: pointer;
+        font-size: 0.8rem;
+    }
+    .win-btn:hover {
+        background: #ff3e3e;
+        color: #000;
+    }
+    .winner-tag {
+        color: #00ff41;
+        font-weight: bold;
+    }
+
+    .remove-btn {
+        background: transparent;
+        border: 1px solid #ff3e3e;
+        color: #ff3e3e;
+        font-size: 0.7rem;
+        cursor: pointer;
+        padding: 0.2rem 0.5rem;
+        font-family: var(--wow-font-display);
+    }
+    .remove-btn:hover {
+        background: rgba(255, 62, 62, 0.1);
     }
 </style>

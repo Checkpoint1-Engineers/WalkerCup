@@ -1,631 +1,430 @@
 <script>
-    import { navigate } from "./router.js";
+    import { scramble } from "$lib/actions/scramble.js";
+    import CyberButton from "$lib/components/CyberButton.svelte";
     import { onMount } from "svelte";
-    import Mission from "./landing/Mission.svelte";
-    import Features from "./landing/Features.svelte";
-    import FAQ from "./landing/FAQ.svelte";
-    import Background from "./components/Background.svelte";
-    import CyberBackground from "./components/CyberBackground.svelte";
-
-    const sections = [
-        {
-            title: "RECRUITING",
-            description:
-                "Identify elite operatives. Assess candidates for Protocol compatibility.",
-            icon: "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z M12 8v4 M12 16h.01", // Shield/Secure
-            image: "/recruiting_prism.png",
-            path: "/recruiting",
-            color: "var(--wow-cyan)",
-            bg: "linear-gradient(45deg, #0b1218, #1a2633)",
-        },
-        {
-            title: "LIVE OPS",
-            description:
-                "Monitor real-time conflict zones. Deploy directives to field agents.",
-            icon: "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-1.07 3.9-2.2 5.06z", // Globe/World
-            image: "/live_ops_prism.png",
-            path: "/live",
-            color: "#ff3e3e",
-            bg: "linear-gradient(45deg, #2a0a0a, #4a1a1a)",
-        },
-        {
-            title: "ARCHIVES",
-            description:
-                "Access classified historical data. Analyze recovery logs and artifact intel.",
-            icon: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z", // Book/Library
-            image: "/archives_prism.png",
-            path: "/archives",
-            color: "#a0b6c5",
-            bg: "linear-gradient(45deg, #0f171f, #232d36)",
-        },
-    ];
 
     let visible = false;
+    let mouseX = 0;
+    let mouseY = 0;
+
     onMount(() => {
-        setTimeout(() => (visible = true), 100);
+        setTimeout(() => (visible = true), 200);
     });
 
-    let heroText = "WELCOME WALKER";
-
-    // Text Scramble Effect
-    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()";
-    function scramble(node) {
-        let text = node.innerText;
-        let original = text;
-        let iterations = 0;
-        let interval = null;
-
-        node.onmouseenter = () => {
-            clearInterval(interval);
-            iterations = 0;
-
-            interval = setInterval(() => {
-                node.innerText = text
-                    .split("")
-                    .map((char, index) => {
-                        if (index < iterations) return original[index];
-                        return chars[Math.floor(Math.random() * chars.length)];
-                    })
-                    .join("");
-
-                if (iterations >= original.length) clearInterval(interval);
-                iterations += 1 / 2; // Speed
-            }, 30);
-        };
-
-        // Reset on leave? Optional. Let's keep it resolved.
-        // node.onmouseleave = () => node.innerText = original;
+    function handleMouseMove(e) {
+        const rect = e.currentTarget.getBoundingClientRect();
+        mouseX = (e.clientX - rect.left) / rect.width - 0.5;
+        mouseY = (e.clientY - rect.top) / rect.height - 0.5;
     }
 </script>
 
-<div class="landing-container" class:visible>
-    <!-- FIXED DRONE BACKGROUND (Visually sits behind everything) -->
-    <div class="fixed-hero-bg">
-        <Background mode="HOME" />
+<!-- svelte-ignore a11y-no-static-element-interactions -->
+<div class="home-wrapper" class:visible on:mousemove={handleMouseMove}>
+    <!-- Reference-style Background -->
+    <div class="bg-effects">
+        <!-- Deep Void Gradient -->
+        <div class="void-bg"></div>
+        <div class="hero-bg-img"></div>
+
+        <!-- Fog Layers -->
+        <div class="fog-layer fog-1"></div>
+        <div class="fog-layer fog-2"></div>
+
+        <!-- Rising Energy Particles (The Reference Look) -->
+        <div class="energy-streams">
+            {#each Array(15) as _, i}
+                <div
+                    class="energy-beam"
+                    style="
+                        --left: {10 + i * 6}%; 
+                        --delay: -{Math.random() * 5}s; 
+                        --duration: {3 + Math.random() * 4}s;
+                        --scale: {0.5 + Math.random() * 1};
+                        --opacity: {0.3 + Math.random() * 0.5};
+                    "
+                ></div>
+            {/each}
+        </div>
+
+        <!-- Interactive Glow Orb (Mouse Following) -->
+        <div
+            class="interactive-glow"
+            style="transform: translate({mouseX * 50}px, {mouseY * 50}px)"
+        ></div>
     </div>
 
-    <!-- HERO SECTION (Transparent, scrolls over fixed bg) -->
-    <section class="hero full-height">
-        <div class="hero-content">
-            <h1 class="hero-title">
-                JOIN THE <span class="highlight">RESISTANCE</span>
-            </h1>
-            <p class="hero-sub">The Protocol Initialized. Ascend the Ranks.</p>
-
-            <button class="cta-button" on:click={() => navigate("/recruiting")}>
-                <span class="cta-text">ENTER PROTOCOL</span>
-                <div class="liquid"></div>
-            </button>
-
-            <div class="hero-decoration"></div>
-        </div>
-
-        <div class="scroll-indicator">
-            <div class="mouse">
-                <div class="wheel"></div>
+    <!-- Hero Content -->
+    <section class="hero">
+        <div class="hero-inner">
+            <!-- Zone Badge -->
+            <div class="status-badge">
+                <div class="pulse-dot"></div>
+                <span>SYSTEM ONLINE</span>
             </div>
-            <div class="arrow"></div>
-        </div>
-    </section>
 
-    <!-- CONTENT LAYER (Solid BG, scrolls over drone) -->
-    <div class="content-layer">
-        <!-- Global background for non-hero sections -->
-        <CyberBackground />
+            <!-- Main Heading -->
+            <h1
+                class="zone-title"
+                use:scramble={{
+                    autoStart: true,
+                    speed: 1,
+                    chars: "WALKERZONE",
+                }}
+            >
+                WALKER ZONE
+            </h1>
 
-        <!-- NAVIGATION GRID (As features/modules) -->
-        <section class="modules-section">
-            <div class="modules-header">
-                <h3 class="section-label">OPERATIONAL MODULES</h3>
+            <!-- Tagline -->
+            <p class="tagline">The Ultimate Competitive Arena</p>
+
+            <!-- Separator -->
+            <div class="separator">
+                <div class="line"></div>
+                <div class="diamond"></div>
                 <div class="line"></div>
             </div>
 
-            <div class="paths-grid">
-                {#each sections as section, i}
-                    <div
-                        class="path-card"
-                        on:click={() => navigate(section.path)}
-                        style="--accent: {section.color}; --bg-grad: {section.bg}; --idx: {i};"
-                    >
-                        <!-- Background Image -->
-                        <img
-                            src={section.image}
-                            alt={section.title}
-                            class="card-bg"
-                            loading="lazy"
-                        />
-                        <div class="card-overlay"></div>
+            <!-- Description -->
+            <p class="description">
+                Enter the void. Compete in high-stakes tournaments. Forge your
+                legacy in the digital realm.
+            </p>
 
-                        <!-- Content -->
-                        <div class="card-content">
-                            <!-- Scramble Effect Applied Here -->
-                            <h2 class="path-title" use:scramble>
-                                <!-- Icon Inline -->
-                                <svg
-                                    class="title-icon"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    stroke="currentColor"
-                                    stroke-width="2"
-                                >
-                                    <path d={section.icon} />
-                                </svg>
-                                {section.title}
-                            </h2>
-                            <p class="path-desc">{section.description}</p>
-                        </div>
-
-                        <!-- Interactive Elements -->
-                        <div class="card-hud"></div>
-                    </div>
-                {/each}
+            <!-- Action Buttons -->
+            <div class="actions">
+                <CyberButton
+                    href="/tournaments"
+                    variant="primary"
+                    label="ENTER ARENA"
+                />
+                <CyberButton
+                    href="/recruiting"
+                    variant="secondary"
+                    label="JOIN FORCES"
+                />
             </div>
-        </section>
-
-        <!-- NEW MARKETING SECTIONS -->
-        <Mission />
-        <Features />
-        <FAQ />
-    </div>
+        </div>
+    </section>
 </div>
 
 <style>
-    .landing-container {
-        /* padding removed to allow hero full height */
+    /* === WRAPPER === */
+    .home-wrapper {
         position: relative;
-        overflow-x: hidden;
+        /* Counteract padding:
+           - Top: -40px (consumes content-area top padding)
+           - Sides: -20px (consumes content + container side padding)
+           - Bottom: -10px (consumes content-area bottom padding ONLY, preserving border flow)
+        */
+        margin: -40px -20px -10px -20px;
+        width: calc(100% + 40px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
         opacity: 0;
-        transition: opacity 1s ease;
+        transform: translateY(20px);
+        transition:
+            opacity 1s ease,
+            transform 1s ease;
+        /* Height adjustment */
+        min-height: 100%;
     }
-    .landing-container.visible {
+    .home-wrapper.visible {
         opacity: 1;
+        transform: translateY(0);
     }
 
-    /* Fixed Background */
-    .fixed-hero-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
+    /* === BACKGROUND EFFECTS === */
+    .bg-effects {
+        position: absolute;
+        inset: 0;
         z-index: 0;
         pointer-events: none;
-    }
-
-    /* Content Layer - Covers the fixed background */
-    .content-layer {
-        position: relative;
-        z-index: 10;
-        background: #050b14; /* Solid dark background */
-        /* Optional: top border or shadow for transition */
-        box-shadow: 0 -50px 100px #050b14;
-    }
-
-    /* HERO: Pro Walker Style */
-    .hero.full-height {
-        min-height: 100vh; /* Full screen */
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        text-align: center;
-        position: relative;
-        z-index: 5; /* Above fixed bg, but content layer will scroll over it? No, content layer is below in DOM. */
-        margin-bottom: 0;
-        /* 
-           Issue: If ContentLayer is *below* Hero in DOM, it starts after 100vh.
-           When we scroll, Hero scrolls up (normal flow), Content Layer scrolls up.
-           Hero Background is fixed.
-           So Hero Content scrolls UP and OFF.
-           Content Layer scrolls UP and COVERS the fixed bg.
-           Correct.
-        */
-    }
-
-    /* Animated Background Grid - Removed to let Drone HUD shine */
-    .hero-bg {
-        display: none;
-    }
-
-    .hero-content {
-        position: relative;
-        z-index: 5;
-    }
-
-    /* ... (Keep existing typography styles) ... */
-    .hero-title {
-        font-family: var(--wow-font-display, "Arial Black", sans-serif);
-        font-size: 6rem;
-        font-weight: 900;
-        color: #fff;
-        line-height: 1;
-        letter-spacing: -2px;
-        margin: 0 0 1.5rem;
-        text-transform: uppercase;
-        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
-        text-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
-    }
-    /* SCANNER FILL EFFECT */
-    .highlight {
-        position: relative;
-        display: inline-block;
-        color: rgba(255, 255, 255, 0.1); /* Faint fill */
-        -webkit-text-stroke: 2px rgba(255, 255, 255, 0.8); /* Strong outline */
-
-        /* The Scanner Beam */
-        background: linear-gradient(
-            to right,
-            rgba(255, 255, 255, 0) 0%,
-            var(--wow-cyan) 50%,
-            rgba(255, 255, 255, 0) 100%
-        );
-        background-size: 200% auto;
-        -webkit-background-clip: text;
-        background-clip: text;
-
-        /* Animation */
-        animation: scan-text 4s linear infinite;
-
-        /* Glow */
-        filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.3));
-    }
-
-    @keyframes scan-text {
-        0% {
-            background-position: -200% center;
-        }
-        100% {
-            background-position: 200% center;
-        }
-    }
-    .hero-sub {
-        font-family: var(--wow-font-display);
-        color: rgba(255, 255, 255, 0.7);
-        font-size: 1.25rem;
-        letter-spacing: 4px;
-        text-transform: uppercase;
-        margin-bottom: 3rem;
-        display: inline-block;
-        padding: 0.5rem 1.5rem;
-        background: rgba(0, 0, 0, 0.4);
-        backdrop-filter: blur(4px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 50px;
-    }
-
-    /* CTA Button - Liquid Fill */
-    .cta-button {
-        position: relative;
-        background: transparent;
-        color: var(--wow-cyan);
-        font-family: var(--wow-font-display);
-        font-weight: 900;
-        font-size: 1.2rem;
-        padding: 1.2rem 3rem;
-        border: 1px solid var(--wow-cyan);
-        cursor: pointer;
-        text-transform: uppercase;
-        letter-spacing: 2px;
-        clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
-        transition:
-            transform 0.2s,
-            box-shadow 0.2s,
-            color 0.3s;
-        box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
         overflow: hidden;
     }
-    .liquid {
+
+    .void-bg {
         position: absolute;
-        top: 100%;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: var(--wow-cyan);
-        transition: top 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        z-index: 0;
-    }
-    .cta-button:hover .liquid {
-        top: 0;
-    }
-    .cta-text {
-        position: relative;
-        z-index: 1;
-    }
-    .cta-button:hover .cta-text {
-        color: #000;
-    }
-    .cta-button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 0 50px rgba(0, 243, 255, 0.4);
+        inset: 0;
+        /* Match the main card background exactly so it blends seamlessly */
+        background: var(--wow-card-bg);
     }
 
-    .hero-decoration {
-        height: 1px;
-        width: 100px;
+    .hero-bg-img {
+        position: absolute;
+        inset: 0;
+        background-image: url("/assets/images/darkside.svg");
+        background-position: center 40%;
+        background-repeat: no-repeat;
+        background-size: 220vh; /* Even bigger per user request */
+        opacity: 0; /* Nearly invisible initially */
+        transform: translateY(100vh) scale(0.9); /* Start completely off-screen from bottom */
+        filter: blur(5px) drop-shadow(0 0 0 rgba(0, 243, 255, 0)); /* Start blurry and no glow */
+        mix-blend-mode: multiply; /* True shadow blending */
+        pointer-events: none;
+        z-index: 0;
+        transition:
+            opacity 0.7s ease-out,
+            transform 0.7s cubic-bezier(0.19, 1, 0.22, 1),
+            filter 0.7s ease-out;
+        transition-delay: 0.1s; /* Reduced delay for immediate impact */
+    }
+
+    .home-wrapper.visible .hero-bg-img {
+        opacity: 0.7; /* Increased final opacity for better visibility */
+        transform: translateY(0) scale(1);
+        filter: blur(0px) drop-shadow(0 0 30px rgba(0, 243, 255, 0.15)); /* Sharp with subtle cyan glow */
+    }
+
+    /* Fog Layers */
+    .fog-layer {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(
+            circle at 50% 50%,
+            rgba(0, 243, 255, 0.05),
+            transparent 70%
+        );
+        filter: blur(60px);
+        opacity: 0.6;
+    }
+    .fog-1 {
+        animation: fog-drift 20s infinite alternate ease-in-out;
+    }
+    .fog-2 {
+        animation: fog-drift 15s infinite alternate-reverse ease-in-out;
+    }
+
+    @keyframes fog-drift {
+        0% {
+            transform: translateX(-5%) translateY(-5%);
+        }
+        100% {
+            transform: translateX(5%) translateY(5%);
+        }
+    }
+
+    /* Rising Energy Streams */
+    .energy-streams {
+        position: absolute;
+        inset: 0;
+        perspective: 1000px;
+        transform-style: preserve-3d;
+    }
+
+    .energy-beam {
+        position: absolute;
+        bottom: -20%;
+        left: var(--left);
+        width: 3px; /* Slightly thicker for visibility */
+        height: 60vh; /* Taller beams */
         background: linear-gradient(
-            90deg,
+            to top,
             transparent,
             var(--wow-cyan),
             transparent
         );
-        margin: 4rem auto 0;
-        opacity: 0.5;
+        opacity: var(--opacity);
+        transform: scale(var(--scale)) rotateZ(-15deg);
+        filter: blur(2px);
+        box-shadow: 0 0 15px var(--wow-cyan);
+        animation: rise var(--duration) linear infinite;
+        animation-delay: var(--delay);
+        /* Add some variation to the beam width */
+        width: calc(2px * var(--scale));
     }
 
-    /* Scroll Indicator */
-    .scroll-indicator {
+    .energy-beam::after {
+        content: "";
         position: absolute;
-        bottom: 2rem;
+        top: 0;
         left: 50%;
         transform: translateX(-50%);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 0.5rem;
-        opacity: 0.7;
-        animation: fadeScroll 2s infinite;
-    }
-    .mouse {
-        width: 24px;
-        height: 36px;
-        border: 2px solid #fff;
-        border-radius: 12px;
-        position: relative;
-    }
-    .wheel {
-        width: 2px;
-        height: 6px;
+        width: 4px;
+        height: 4px;
         background: #fff;
-        position: absolute;
-        top: 6px;
-        left: 50%;
-        transform: translateX(-50%);
-        animation: scrollWheel 1.5s infinite;
+        border-radius: 50%;
+        box-shadow:
+            0 0 10px #fff,
+            0 0 20px var(--wow-cyan);
     }
-    .arrow {
-        width: 10px;
-        height: 10px;
-        border-right: 2px solid #fff;
-        border-bottom: 2px solid #fff;
-        transform: rotate(45deg);
-    }
-    @keyframes scrollWheel {
+
+    @keyframes rise {
         0% {
-            top: 6px;
-            opacity: 1;
+            transform: translateY(120%) scale(var(--scale)) rotateZ(-15deg);
+            opacity: 0;
+        }
+        15% {
+            opacity: var(--opacity);
+        }
+        50% {
+            opacity: calc(var(--opacity) * 1.5);
+        } /* Pulse in middle */
+        85% {
+            opacity: var(--opacity);
         }
         100% {
-            top: 18px;
+            transform: translateY(-120%) scale(var(--scale)) rotateZ(-15deg);
             opacity: 0;
         }
     }
-    @keyframes fadeScroll {
-        0%,
-        100% {
-            opacity: 0.4;
-        }
-        50% {
-            opacity: 1;
-        }
+
+    /* Interactive Glow */
+    .interactive-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 800px; /* Larger glow area */
+        height: 800px;
+        background: radial-gradient(
+            circle,
+            rgba(0, 243, 255, 0.06),
+            transparent 60%
+        );
+        border-radius: 50%;
+        pointer-events: none;
+        margin-top: -400px;
+        margin-left: -400px;
+        transition: transform 0.1s ease-out; /* Smoother tracking */
+        mix-blend-mode: screen;
     }
 
-    /* MODULES GRID SECTION */
-    .modules-section {
-        padding: 4rem 1.5rem;
+    /* === HERO CONTENT === */
+    .hero {
         position: relative;
         z-index: 2;
-    }
-
-    .paths-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 2rem;
-        max-width: 1400px;
-        margin: 0 auto;
-    }
-
-    /* KINETIC INDUSTRIAL CARD */
-    .path-card {
-        position: relative;
-        background: #030303; /* Deepest black */
-        border-radius: 2px;
-        overflow: hidden;
-        cursor: pointer;
-        height: 360px;
-        display: flex;
-        flex-direction: column;
-
-        /* Base Border */
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        transition:
-            transform 0.3s ease,
-            box-shadow 0.3s ease;
-    }
-
-    /* HOVER: Lift */
-    .path-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        border-color: transparent; /* Let the gradient shine */
-    }
-
-    /* ANIMATED BORDER GRADIENT */
-    .path-card::before {
-        content: "";
-        position: absolute;
-        inset: -2px;
-        background: conic-gradient(
-            from 0deg,
-            transparent 0deg,
-            transparent 90deg,
-            var(--accent) 130deg,
-            transparent 180deg
-        );
-        z-index: 0;
-        opacity: 0;
-        transition: opacity 0.3s;
-        animation: rotateBorder 4s linear infinite;
-    }
-
-    .path-card:hover::before {
-        opacity: 1;
-    }
-
-    @keyframes rotateBorder {
-        from {
-            transform: rotate(0deg);
-        }
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    /* Inner Mask to hide the center of the gradient */
-    .path-card::after {
-        content: "";
-        position: absolute;
-        inset: 1px; /* Border thickness */
-        background: #030303;
-        z-index: 1;
-        pointer-events: none;
-    }
-
-    /* IMAGE CONTAINER (Top 60%) */
-    .card-bg {
-        position: absolute; /* Behind content but above ::after mask? No, need z-index dance */
-        top: 0;
-        left: 0;
+        text-align: center;
         width: 100%;
-        height: 60%;
-        object-fit: cover;
-        z-index: 2; /* Sit above the mask */
-
-        /* Industrial Filter */
-        filter: grayscale(100%) contrast(1.2) brightness(0.8);
-        transition: all 0.5s ease;
-
-        mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-        -webkit-mask-image: linear-gradient(
-            to bottom,
-            black 80%,
-            transparent 100%
-        );
-    }
-
-    .path-card:hover .card-bg {
-        filter: none; /* Color restore */
-        height: 65%; /* Slight grow */
-    }
-
-    /* OVERLAY */
-    .card-overlay {
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to bottom, transparent 0%, #030303 60%);
-        z-index: 3;
-        pointer-events: none;
-    }
-
-    /* CONTENT (Bottom) */
-    .card-content {
-        position: relative;
-        z-index: 5;
-        height: 100%;
+        max-width: 1000px;
+        padding: 90px 1rem 60px; /* Reduced top, added bottom padding */
+        box-sizing: border-box;
         display: flex;
         flex-direction: column;
-        justify-content: flex-end;
-        padding: 2rem;
+        justify-content: flex-start;
+        height: auto;
+        min-height: 100%;
     }
 
-    /* TEXT */
-    .path-title {
+    .hero-inner {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem; /* Compact gap */
+    }
+
+    /* Badge */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 1rem;
+        background: rgba(0, 243, 255, 0.05);
+        border: 1px solid rgba(0, 243, 255, 0.2);
+        border-radius: 20px;
         font-family: var(--wow-font-display);
-        font-size: 1.8rem;
-        font-weight: 800;
+        font-size: 0.7rem;
+        color: var(--wow-cyan);
+        letter-spacing: 0.15em;
+        backdrop-filter: blur(5px);
+        margin-bottom: 0.25rem; /* Reduced margin */
+    }
+    .pulse-dot {
+        width: 6px;
+        height: 6px;
+        background: var(--wow-cyan);
+        border-radius: 50%;
+        box-shadow: 0 0 8px var(--wow-cyan);
+        animation: pulse 2s infinite;
+    }
+
+    /* Title */
+    .zone-title {
+        font-family: var(--wow-font-display);
+        font-size: clamp(3rem, 8vw, 6rem); /* Reduced size */
+        font-weight: 900;
+        margin: 0;
+        line-height: 0.9;
         color: #fff;
-        margin-bottom: 0.5rem;
+        text-shadow: 0 0 40px rgba(0, 243, 255, 0.3);
+        letter-spacing: 0.02em;
+        background: linear-gradient(180deg, #fff 0%, #bdeeff 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .tagline {
+        font-family: var(--wow-font-body);
+        font-size: clamp(0.9rem, 1.5vw, 1.1rem); /* Slightly smaller */
+        color: rgba(255, 255, 255, 0.8);
+        letter-spacing: 0.25em;
         text-transform: uppercase;
-        letter-spacing: 1px;
+        margin: 0;
+    }
+
+    /* Separator */
+    .separator {
         display: flex;
         align-items: center;
-        gap: 0.8rem;
-        transition: transform 0.3s;
-    }
-
-    .path-card:hover .path-title {
-        transform: translateX(10px);
-        color: var(--accent);
-    }
-
-    /* ICON */
-    .title-icon {
-        width: 24px;
-        height: 24px;
-        color: #666; /* Dim by default */
-        transition: all 0.3s;
-    }
-    .path-card:hover .title-icon {
-        color: var(--accent);
-        filter: drop-shadow(0 0 5px var(--accent));
-    }
-
-    .path-desc {
-        font-size: 0.95rem;
-        color: #888;
-        line-height: 1.5;
-        max-width: 100%;
-
-        /* Always visible but dim */
-        opacity: 0.7;
-        transform: translateY(0);
-        transition: all 0.3s;
-    }
-    .path-card:hover .path-desc {
-        opacity: 1;
-        color: #fff;
-    }
-
-    /* TECH DECORATION (The Tab) */
-    .card-hud {
-        position: absolute;
-        top: 20px;
-        right: 20px;
-        width: 40px;
-        height: 4px;
-        background: rgba(255, 255, 255, 0.1);
-        z-index: 5;
-        overflow: hidden;
-    }
-    .card-hud::before {
-        content: "";
-        position: absolute;
-        top: 0;
-        left: 0;
+        gap: 1rem;
         width: 100%;
-        height: 100%;
-        background: var(--accent);
-        transform: translateX(-100%);
-        transition: transform 0.4s ease;
+        max-width: 200px;
+        opacity: 0.6;
+        margin: 0.25rem 0; /* Reduced margin */
     }
-    .path-card:hover .card-hud::before {
-        transform: translateX(0);
+    .line {
+        height: 1px;
+        flex: 1;
+        background: linear-gradient(90deg, transparent, var(--wow-cyan));
+    }
+    .line:last-child {
+        background: linear-gradient(90deg, var(--wow-cyan), transparent);
+    }
+    .diamond {
+        width: 6px;
+        height: 6px;
+        background: var(--wow-cyan);
+        transform: rotate(45deg);
+        box-shadow: 0 0 8px var(--wow-cyan);
     }
 
-    /* Mobile Responsiveness */
+    /* Description */
+    .description {
+        font-family: var(--wow-font-body);
+        font-size: 1rem; /* Slightly smaller */
+        color: rgba(255, 255, 255, 0.7);
+        max-width: 550px;
+        line-height: 1.4;
+        margin: 0;
+    }
+
+    /* Actions */
+    .actions {
+        display: flex;
+        gap: 1.5rem;
+        margin-top: 1rem; /* Reduced margin */
+    }
+
+    @keyframes pulse {
+        0%,
+        100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.3;
+        }
+    }
+
     @media (max-width: 768px) {
-        .paths-grid {
-            grid-template-columns: 1fr; /* Full width on mobile */
-            gap: 1.5rem;
+        .actions {
+            flex-direction: column;
+            width: 100%;
+            max-width: 280px;
+            gap: 1rem;
         }
-        .path-card {
-            height: 300px; /* Slightly shorter */
-        }
-        .card-bg {
-            filter: none; /* Color always on mobile */
-            opacity: 0.6;
-        }
-        .path-title {
-            font-size: 1.5rem;
+        .zone-title {
+            font-size: 12vw; /* Ensure it fits on mobile */
         }
     }
 </style>
