@@ -1,116 +1,113 @@
-# Walker Tournament Platform 🎮
+# Walker Tournament Platform
 
-A comprehensive tournament management platform for competitive gaming, featuring robust backend APIs and an interactive Svelte frontend.
+A tournament management system for competitive gaming. Backend runs on .NET 9, frontend is built with SvelteKit.
 
-## 📋 Overview
+## What it does
 
-The Walker Tournament Platform (WalkerCup) is a full-stack application designed to manage high-stakes gaming tournaments. It orchestrates the complete lifecycle of combat events, from player registration to bracket generation, match resolution, and championship determination. The system ensures data integrity through optimistic concurrency control and delivers real-time tournament progression.
+WalkerCup handles the full tournament lifecycle—creating events, managing player registration, generating brackets, tracking matches, and crowning winners. The backend exposes a REST API, and the frontend provides a dark-themed UI with some visual flair.
 
-## ✨ Features
+## Tech stack
 
-### Tournament Management
-- **Complete Lifecycle Management**: Draft creation, registration, bracket generation, and match resolution
-- **Automated Bracket System**: Automatic bracket generation and winner progression
-- **Multiple Formats**: Support for 1v1, 5v5, and custom tournament formats
-- **XP & Rewards**: Configurable experience points and reward distribution
+**Backend**
+- .NET 9 Web API
+- Entity Framework Core with SQLite
+- JWT authentication
+- BCrypt password hashing
+- Serilog for logging
 
+**Frontend**
+- SvelteKit with Svelte 5
+- TypeScript
+- Vitest + Playwright for testing
+- Vite for builds
 
-
-
-
-### Security & Authentication
-- **JWT Authentication**: Secure token-based authentication
-- **Password Management**: BCrypt hashing with reset functionality
-- **Role-Based Authorization**: Granular permission control
-- **User Secrets**: Secure configuration management
-
-### Interactive Frontend
-- **Modern UI/UX**: Sleek, responsive design with glassmorphism effects
-- **Interactive Animations**: Micro-interactions and smooth transitions
-- **Dark Mode**: Premium dark theme aesthetic
-
-## 🛠️ Technology Stack
+## Getting started
 
 ### Backend
-- **.NET 9.0**: Modern ASP.NET Core Web API
-- **Entity Framework Core**: ORM with SQLite database
-- **JWT Authentication**: Secure token-based auth
-- **BCrypt.Net**: Password hashing
-- **Serilog**: Structured logging
-- **Swagger/OpenAPI**: API documentation
+
+```bash
+cd backend/src/WalkerTournament.Api
+
+# Set up JWT secret (required)
+dotnet user-secrets init
+dotnet user-secrets set "Jwt:SecretKey" "your-secret-key-at-least-32-characters"
+
+# Run migrations
+dotnet ef database update
+
+# Start the server
+dotnet run
+```
+
+API runs at `https://localhost:5001`. Swagger docs at `/swagger`.
 
 ### Frontend
-- **Svelte 5**: Reactive UI framework
-- **Vite**: Fast build tool and dev server
-- **Vanilla CSS**: Custom styling with modern design patterns
-- **SPA Router**: Client-side routing
 
-## 📦 Prerequisites
+```bash
+cd frontend
 
-- **.NET 9.0 SDK** or later
-- **Node.js** 18+ and npm
-- **Git** for version control
-- **SQLite** (included with .NET)
+pnpm install
+pnpm dev
+```
 
-## 🚀 Getting Started
+Runs at `http://localhost:5173`.
 
-### Backend Setup
+If the API is somewhere other than `localhost:5001`, update the base URL in `src/lib/api.ts`.
 
-1. **Navigate to the backend directory**
-   ```bash
-   cd backend/src/WalkerTournament.Api
-   ```
+## Project layout
 
-2. **Configure JWT Secret**
-   ```bash
-   dotnet user-secrets init
-   dotnet user-secrets set "Jwt:SecretKey" "your-super-secret-key-minimum-32-characters-long"
-   ```
+```
+├── backend/
+│   └── src/WalkerTournament.Api/
+│       ├── Controllers/    # API endpoints
+│       ├── Data/           # EF Core context + migrations
+│       ├── Models/         # Domain entities
+│       ├── DTOs/           # Request/response types
+│       └── Services/       # Business logic
+│
+├── frontend/
+│   └── src/
+│       ├── routes/         # SvelteKit pages
+│       │   ├── +layout.svelte
+│       │   ├── +page.svelte
+│       │   ├── [slug]/     # Tournament detail page
+│       │   ├── live/
+│       │   ├── archives/
+│       │   └── recruiting/
+│       └── lib/
+│           ├── components/ # Reusable UI bits
+│           ├── landing/    # Homepage sections
+│           └── api.ts      # API client
+│
+└── docs/                   # API documentation
+```
 
-3. **Apply Database Migrations**
-   ```bash
-   dotnet ef database update
-   ```
+## Default login
 
-4. **Run the Backend**
-   ```bash
-   dotnet run
-   ```
+A superadmin account is seeded on first run:
 
-   The API will be available at `https://localhost:5001` (or `http://localhost:5000`)
+- **Email:** `superadmin@walker.com`
+- **Password:** `SuperAdmin123!`
 
-5. **Access API Documentation**
-   - Swagger UI: `https://localhost:5001/swagger`
+Change this before deploying anywhere public.
 
-### Frontend Setup
+## Running tests
 
-1. **Navigate to the frontend directory**
-   ```bash
-   cd frontend
-   ```
+```bash
+# Backend
+cd backend/tests
+dotnet test
 
-2. **Install Dependencies**
-   ```bash
-   npm install
-   ```
+# Frontend
+cd frontend
+pnpm test          # unit + e2e
+pnpm test:unit     # just vitest
+pnpm test:e2e      # just playwright
+```
 
-3. **Configure API Endpoint**
-   
-   Edit `src/lib/api.js` to set the correct backend URL:
-   ```javascript
-   const API_BASE_URL = 'https://localhost:5001';
-   ```
+## Configuration
 
-4. **Run the Development Server**
-   ```bash
-   npm run dev
-   ```
-
-   The frontend will be available at `http://localhost:5173`
-
-## ⚙️ Configuration
-
-### Backend Configuration (`appsettings.json`)
+### Backend (`appsettings.json`)
 
 ```json
 {
@@ -125,143 +122,32 @@ The Walker Tournament Platform (WalkerCup) is a full-stack application designed 
 }
 ```
 
-**Important**: The `Jwt:SecretKey` is stored in user secrets, not in `appsettings.json`, for security.
-
-### Frontend Configuration (`src/lib/api.js`)
-
-Update the `API_BASE_URL` constant to match your backend URL:
-- Development: `https://localhost:5001`
-- Production: Your deployed API URL
-
-## 📁 Project Structure
-
-```
-Walker Tournament/
-├── backend/
-│   ├── src/
-│   │   └── WalkerTournament.Api/
-│   │       ├── Controllers/       # API endpoints
-│   │       ├── Data/              # DbContext and migrations
-│   │       ├── Models/            # Entity models
-│   │       ├── DTOs/              # Data transfer objects
-│   │       ├── Services/          # Business logic
-│   │       └── Program.cs         # Application entry point
-│   ├── tests/                     # Unit and integration tests
-│   └── WalkerTournament.sln       # Solution file
-├── frontend/
-│   ├── src/
-│   │   ├── lib/
-│   │   │   ├── api.js            # API client
-│   │   │   └── router.js         # SPA routing
-│   │   ├── components/           # Svelte components
-│   │   ├── pages/                # Page components
-│   │   ├── App.svelte            # Root component
-│   │   └── main.js               # Entry point
-│   ├── public/                   # Static assets
-│   └── package.json              # Dependencies
-├── docs/                         # API documentation website
-└── README.md                     # This file
-```
-
-## 🔐 Default Credentials
-
-The system seeds a SuperAdmin account on first run:
-
-- **Email**: `superadmin@walker.com`
-- **Password**: `SuperAdmin123!`
-
-**Important**: Change these credentials immediately in production!
-
-## 🎯 Core Workflows
-
-### 1. Tournament Creation & Management
-1. **Draft**: Admin creates a tournament and configures settings (format, XP rewards, deadlines)
-2. **Registration**: Players join via the open registration endpoint
-3. **Lock & Draw**: Admin locks registration and triggers bracket generation
-4. **Combat**: Admin resolves matches by declaring winners; system auto-promotes winners
-5. **Victory**: Final match determines the champion, awarding XP and closing the event
-
-
-
-## 🧪 Testing
-
-### Backend Tests
-```bash
-cd backend/tests
-dotnet test
-```
-
-### Frontend Testing
-```bash
-cd frontend
-npm run build  # Verify build succeeds
-```
-
-## 🌐 API Documentation
-
-Comprehensive API documentation is available in the `/docs` folder. Once the backend is running, access:
-
-- **Interactive Docs**: View `/docs/index.html` in a browser
-- **Swagger UI**: `https://localhost:5001/swagger`
-
-## 🔧 Troubleshooting
-
-### Backend Issues
-
-**Problem**: "Unable to connect to database"
-- **Solution**: Ensure migrations are applied: `dotnet ef database update`
-
-**Problem**: "JWT secret not configured"
-- **Solution**: Set user secret: `dotnet user-secrets set "Jwt:SecretKey" "your-key"`
-
-**Problem**: "Port already in use"
-- **Solution**: Change port in `Properties/launchSettings.json`
-
-### Frontend Issues
-
-**Problem**: "Cannot connect to API"
-- **Solution**: Verify backend is running and `API_BASE_URL` in `api.js` is correct
-
-**Problem**: "CORS errors"
-- **Solution**: Backend CORS is configured for `http://localhost:5173` (Vite default)
-
-**Problem**: "npm install fails"
-- **Solution**: Ensure Node.js 18+ is installed, delete `node_modules` and try again
-
-## 🚀 Production Deployment
-
-### Backend
-1. Set production connection string in `appsettings.Production.json`
-2. Configure JWT secret via environment variable or secure secret management
-3. Build: `dotnet build -c Release`
-4. Publish: `dotnet publish -c Release -o ./publish`
-5. Deploy to your hosting platform (Azure, AWS, etc.)
+JWT secret goes in user secrets, not the config file.
 
 ### Frontend
-1. Update `API_BASE_URL` in `src/lib/api.js` to production API URL
-2. Build: `npm run build`
-3. Deploy `dist/` folder to static hosting (Netlify, Vercel, Azure Static Web Apps, etc.)
 
-## 🤝 Contributing
+API base URL is set in `src/lib/api.ts`. CORS on the backend is configured for `http://localhost:5173` by default.
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+## Deployment
 
-## 📝 License
+**Backend:** Build with `dotnet publish -c Release`, deploy the output to your host of choice. Set the JWT secret via environment variables or a secrets manager.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+**Frontend:** Run `pnpm build`, deploy the `.svelte-kit` output to any static host (Vercel, Netlify, etc.) or use an adapter for node/cloudflare/etc.
 
-## 👥 Team
+## Troubleshooting
 
-Developed by **Checkpoint1 Engineers**
+**"JWT secret not configured"** — Run the `dotnet user-secrets set` command shown above.
 
-## 📧 Support
+**"Unable to connect to database"** — Make sure you ran `dotnet ef database update`.
 
-For issues, questions, or contributions, please open an issue on GitHub.
+**"CORS errors"** — Check that the backend's CORS config includes your frontend URL.
+
+**"Cannot connect to API"** — Verify the backend is running and the URL in `api.ts` is correct.
+
+## License
+
+MIT
 
 ---
 
-**⚡ Walker Tournament Platform** - Where Champions Are Made
+Built by Checkpoint1 Engineers

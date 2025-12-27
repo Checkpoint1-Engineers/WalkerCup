@@ -1,325 +1,328 @@
-<script>
-    import { onMount } from "svelte";
+<script lang="ts">
+	import { onMount } from 'svelte';
 
-    export let mode = "HOLOGRAM";
+	export let mode = 'HOLOGRAM';
 
-    let canvas;
-    let width, height;
+	let canvas: HTMLCanvasElement;
+	let width: number;
+	let height: number;
 
-    // Config
-    const droneSrc = "/assets/drone/2.png"; // Using existing asset
+	// Config
+	const droneSrc = '/assets/drone/2.png';
 
-    // State
-    let mouse = { x: 0, y: 0 };
-    let animationFrame;
-    let time = 0;
-    let entry = 0;
+	// State
+	let mouse = { x: 0, y: 0 };
+	let animationFrame: number;
+	let time = 0;
+	let entry = 0;
 
-    // Assets
-    let droneImg;
-    let loaded = false;
+	// Assets
+	let droneImg: HTMLImageElement | null = null;
+	let loaded = false;
 
-    // HUD Config
-    const hudColor = "#00f3ff";
-    const hudColorDim = "rgba(0, 243, 255, 0.3)";
+	// HUD Config
+	const hudColor = '#00f3ff';
+	const hudColorDim = 'rgba(0, 243, 255, 0.3)';
 
-    // Rings Data
-    const rings = [
-        { r: 180, w: 2, speed: 0.002, dash: [0], opacity: 0.8 },
-        { r: 220, w: 1, speed: -0.003, dash: [10, 10], opacity: 0.5 },
-        { r: 240, w: 5, speed: 0.001, dash: [2, 20], opacity: 0.3 },
-        { r: 350, w: 1, speed: 0.005, dash: [50, 50], opacity: 0.4 },
-        { r: 360, w: 20, speed: -0.001, dash: [2, 100], opacity: 0.1 }, // Decorative big segments
-    ];
+	// Rings Data
 
-    onMount(() => {
-        const ctx = canvas.getContext("2d");
-        let isMobile = false;
+	interface Ring {
+		r: number;
+		w: number;
+		speed: number;
+		dash: number[];
+		opacity: number;
+	}
 
-        // Load Drone
-        const img = new Image();
-        img.src = droneSrc;
-        img.onload = () => {
-            droneImg = img;
-            loaded = true;
-        };
+	const rings: Ring[] = [
+		{ r: 180, w: 2, speed: 0.002, dash: [0], opacity: 0.8 },
+		{ r: 220, w: 1, speed: -0.003, dash: [10, 10], opacity: 0.5 },
+		{ r: 240, w: 5, speed: 0.001, dash: [2, 20], opacity: 0.3 },
+		{ r: 350, w: 1, speed: 0.005, dash: [50, 50], opacity: 0.4 },
+		{ r: 360, w: 20, speed: -0.001, dash: [2, 100], opacity: 0.1 }
+	];
 
-        function resize() {
-            const rect = canvas.getBoundingClientRect();
-            width = rect.width;
-            height = rect.height;
-            canvas.width = width;
-            canvas.height = height;
-            isMobile = width < 768;
-        }
+	onMount(() => {
+		const ctx = canvas.getContext('2d')!;
+		let isMobile = false;
 
-        function handleMouseMove(e) {
-            const rect = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - rect.left;
-            mouse.y = e.clientY - rect.top;
-        }
+		// Load Drone
+		const img = new Image();
+		img.src = droneSrc;
+		img.onload = () => {
+			droneImg = img;
+			loaded = true;
+		};
 
-        // Helper: Draw Ring
-        function drawRing(ctx, cx, cy, ring) {
-            ctx.save();
-            ctx.translate(cx, cy);
-            ctx.rotate(time * ring.speed);
+		function resize() {
+			const rect = canvas.getBoundingClientRect();
+			width = rect.width;
+			height = rect.height;
+			canvas.width = width;
+			canvas.height = height;
+			isMobile = width < 768;
+		}
 
-            // Pulse effect on rings
-            const pulse = 1 + Math.sin(time * 0.05) * 0.02;
-            ctx.scale(pulse, pulse);
+		function handleMouseMove(e: MouseEvent) {
+			const rect = canvas.getBoundingClientRect();
+			mouse.x = e.clientX - rect.left;
+			mouse.y = e.clientY - rect.top;
+		}
 
-            ctx.beginPath();
-            ctx.arc(0, 0, ring.r * (isMobile ? 0.6 : 1), 0, Math.PI * 2); // Scale rings on mobile
-            ctx.lineWidth = ring.w;
-            ctx.strokeStyle = hudColor;
-            ctx.globalAlpha = ring.opacity;
-            if (ring.dash) ctx.setLineDash(ring.dash);
-            ctx.stroke();
+		// Helper: Draw Ring
+		function drawRing(ctx: CanvasRenderingContext2D, cx: number, cy: number, ring: Ring) {
+			ctx.save();
+			ctx.translate(cx, cy);
+			ctx.rotate(time * ring.speed);
 
-            ctx.restore();
-        }
+			// Pulse effect on rings
+			const pulse = 1 + Math.sin(time * 0.05) * 0.02;
+			ctx.scale(pulse, pulse);
 
-        // Helper: Draw Tech Text
-        function drawTechText(ctx, x, y, text, align = "left") {
-            ctx.save();
-            ctx.fillStyle = hudColor;
-            ctx.font = isMobile ? "8px monospace" : "10px monospace";
-            ctx.textAlign = align;
-            ctx.shadowBlur = 5;
-            ctx.shadowColor = hudColor;
-            ctx.fillText(text, x, y);
-            ctx.restore();
-        }
+			ctx.beginPath();
+			ctx.arc(0, 0, ring.r * (isMobile ? 0.6 : 1), 0, Math.PI * 2); // Scale rings on mobile
+			ctx.lineWidth = ring.w;
+			ctx.strokeStyle = hudColor;
+			ctx.globalAlpha = ring.opacity;
+			if (ring.dash) ctx.setLineDash(ring.dash);
+			ctx.stroke();
 
-        // Helper: Draw Peripheral UI
-        function drawUI(ctx, cx, cy) {
-            // Hide complex brackets on mobile, too cluttered
-            if (isMobile) {
-                // Simple mobile corners instead
-                const mSize = 100;
-                ctx.save();
-                ctx.strokeStyle = hudColorDim;
-                ctx.lineWidth = 1;
+			ctx.restore();
+		}
 
-                // Top Left
-                ctx.beginPath();
-                ctx.moveTo(20, 100);
-                ctx.lineTo(20, 20);
-                ctx.lineTo(100, 20);
-                ctx.stroke();
+		// Helper: Draw Tech Text
+		function drawTechText(
+			ctx: CanvasRenderingContext2D,
+			x: number,
+			y: number,
+			text: string,
+			align: CanvasTextAlign = 'left'
+		) {
+			ctx.save();
+			ctx.fillStyle = hudColor;
+			ctx.font = isMobile ? '8px monospace' : '10px monospace';
+			ctx.textAlign = align;
+			ctx.shadowBlur = 5;
+			ctx.shadowColor = hudColor;
+			ctx.fillText(text, x, y);
+			ctx.restore();
+		}
 
-                // Bottom Right
-                ctx.beginPath();
-                ctx.moveTo(width - 20, height - 100);
-                ctx.lineTo(width - 20, height - 20);
-                ctx.lineTo(width - 100, height - 20);
-                ctx.stroke();
+		// Helper: Draw Peripheral UI
+		function drawUI(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+			// Hide complex brackets on mobile, too cluttered
+			if (isMobile) {
+				// Simple mobile corners instead
+				ctx.save();
+				ctx.strokeStyle = hudColorDim;
+				ctx.lineWidth = 1;
 
-                ctx.restore();
-                return;
-            }
+				// Top Left
+				ctx.beginPath();
+				ctx.moveTo(20, 100);
+				ctx.lineTo(20, 20);
+				ctx.lineTo(100, 20);
+				ctx.stroke();
 
-            // Desktop UI
-            ctx.save();
-            ctx.strokeStyle = hudColorDim;
-            ctx.lineWidth = 1;
+				// Bottom Right
+				ctx.beginPath();
+				ctx.moveTo(width - 20, height - 100);
+				ctx.lineTo(width - 20, height - 20);
+				ctx.lineTo(width - 100, height - 20);
+				ctx.stroke();
 
-            // Left Bracket
-            ctx.beginPath();
-            ctx.moveTo(cx - 500, cy - 200);
-            ctx.lineTo(cx - 550, cy - 200);
-            ctx.lineTo(cx - 550, cy + 200);
-            ctx.lineTo(cx - 500, cy + 200);
-            ctx.stroke();
+				ctx.restore();
+				return;
+			}
 
-            // Right Bracket
-            ctx.beginPath();
-            ctx.moveTo(cx + 500, cy - 200);
-            ctx.lineTo(cx + 550, cy - 200);
-            ctx.lineTo(cx + 550, cy + 200);
-            ctx.lineTo(cx + 500, cy + 200);
-            ctx.stroke();
+			// Desktop UI
+			ctx.save();
+			ctx.strokeStyle = hudColorDim;
+			ctx.lineWidth = 1;
 
-            // Random Data Streams
-            const randomH = Math.sin(time * 0.05) * 50;
-            drawTechText(
-                ctx,
-                cx - 540,
-                cy - 50 + randomH,
-                `SYS.ROT: ${(time * 0.1).toFixed(2)}`,
-                "left",
-            );
-            drawTechText(
-                ctx,
-                cx - 540,
-                cy - 30 + randomH,
-                `TGT.LOCK: ACQUIRED`,
-                "left",
-            );
-            drawTechText(ctx, cx - 540, cy - 10 + randomH, `MEM: 64TB`, "left");
+			// Left Bracket
+			ctx.beginPath();
+			ctx.moveTo(cx - 500, cy - 200);
+			ctx.lineTo(cx - 550, cy - 200);
+			ctx.lineTo(cx - 550, cy + 200);
+			ctx.lineTo(cx - 500, cy + 200);
+			ctx.stroke();
 
-            drawTechText(ctx, cx + 540, cy, `DRONE_ID: WK-77`, "right");
-            drawTechText(ctx, cx + 540, cy + 20, `STATUS: ONLINE`, "right");
+			// Right Bracket
+			ctx.beginPath();
+			ctx.moveTo(cx + 500, cy - 200);
+			ctx.lineTo(cx + 550, cy - 200);
+			ctx.lineTo(cx + 550, cy + 200);
+			ctx.lineTo(cx + 500, cy + 200);
+			ctx.stroke();
 
-            ctx.restore();
-        }
+			// Random Data Streams
+			const randomH = Math.sin(time * 0.05) * 50;
+			drawTechText(ctx, cx - 540, cy - 50 + randomH, `SYS.ROT: ${(time * 0.1).toFixed(2)}`, 'left');
+			drawTechText(ctx, cx - 540, cy - 30 + randomH, `TGT.LOCK: ACQUIRED`, 'left');
+			drawTechText(ctx, cx - 540, cy - 10 + randomH, `MEM: 64TB`, 'left');
 
-        function drawDrone(ctx, cx, cy, easeEntry = 1) {
-            if (!droneImg) return;
+			drawTechText(ctx, cx + 540, cy, `DRONE_ID: WK-77`, 'right');
+			drawTechText(ctx, cx + 540, cy + 20, `STATUS: ONLINE`, 'right');
 
-            ctx.save();
-            ctx.translate(cx, cy);
+			ctx.restore();
+		}
 
-            // Entry scale effect
-            const entryScale = 0.5 + 0.5 * easeEntry;
-            ctx.scale(entryScale, entryScale);
+		function drawDrone(ctx: CanvasRenderingContext2D, cx: number, cy: number, easeEntry = 1) {
+			if (!droneImg) return;
 
-            // Subtle Float + Pulse
-            const floatY = Math.sin(time * 0.03) * (isMobile ? 5 : 10);
-            ctx.translate(0, floatY);
+			ctx.save();
+			ctx.translate(cx, cy);
 
-            // Scale to fit inside rings
-            const baseScale = isMobile ? 0.2 : 0.28; // Reduced from 0.3/0.4
-            const dw = droneImg.width * baseScale;
-            const dh = droneImg.height * baseScale;
+			// Entry scale effect
+			const entryScale = 0.5 + 0.5 * easeEntry;
+			ctx.scale(entryScale, entryScale);
 
-            // Draw Drone
-            ctx.globalAlpha = 0.9;
-            ctx.shadowBlur = 15 + Math.sin(time * 0.1) * 10; // Pulsing shadow
-            ctx.shadowColor = hudColor;
-            ctx.drawImage(droneImg, -dw / 2, -dh / 2, dw, dh);
+			// Subtle Float + Pulse
+			const floatY = Math.sin(time * 0.03) * (isMobile ? 5 : 10);
+			ctx.translate(0, floatY);
 
-            // Scan effect over entire screen width
-            ctx.save();
-            ctx.globalCompositeOperation = "lighter";
-            const scanY = ((time * 3) % (height + 100)) - height / 2 - 50;
+			// Scale to fit inside rings
+			const baseScale = isMobile ? 0.2 : 0.28; // Reduced from 0.3/0.4
+			const dw = droneImg.width * baseScale;
+			const dh = droneImg.height * baseScale;
 
-            // Draw full width scanline (relative to center cx, cy)
-            ctx.beginPath();
-            ctx.moveTo(-cx, scanY);
-            ctx.lineTo(width - cx, scanY);
-            ctx.strokeStyle = "rgba(0, 243, 255, 0.5)";
-            ctx.lineWidth = 2;
-            ctx.shadowBlur = 20;
-            ctx.shadowColor = hudColor;
-            ctx.stroke();
+			// Draw Drone
+			ctx.globalAlpha = 0.9;
+			ctx.shadowBlur = 15 + Math.sin(time * 0.1) * 10; // Pulsing shadow
+			ctx.shadowColor = hudColor;
+			ctx.drawImage(droneImg, -dw / 2, -dh / 2, dw, dh);
 
-            // Additional Scan Particles
-            if (Math.random() > 0.8) {
-                ctx.fillStyle = hudColor;
-                ctx.fillRect(Math.random() * width - cx, scanY, 2, 2);
-            }
+			// Scan effect over entire screen width
+			ctx.save();
+			ctx.globalCompositeOperation = 'lighter';
+			const scanY = ((time * 3) % (height + 100)) - height / 2 - 50;
 
-            ctx.restore();
+			// Draw full width scanline (relative to center cx, cy)
+			ctx.beginPath();
+			ctx.moveTo(-cx, scanY);
+			ctx.lineTo(width - cx, scanY);
+			ctx.strokeStyle = 'rgba(0, 243, 255, 0.5)';
+			ctx.lineWidth = 2;
+			ctx.shadowBlur = 20;
+			ctx.shadowColor = hudColor;
+			ctx.stroke();
 
-            ctx.restore();
-        }
+			// Additional Scan Particles
+			if (Math.random() > 0.8) {
+				ctx.fillStyle = hudColor;
+				ctx.fillRect(Math.random() * width - cx, scanY, 2, 2);
+			}
 
-        function draw() {
-            time += 1;
+			ctx.restore();
 
-            // Clear & BG
-            const bgGrad = ctx.createRadialGradient(
-                width / 2,
-                height / 2,
-                0,
-                width / 2,
-                height / 2,
-                width,
-            );
-            bgGrad.addColorStop(0, "#050b14");
-            bgGrad.addColorStop(1, "#000000");
-            ctx.fillStyle = bgGrad;
-            ctx.fillRect(0, 0, width, height);
+			ctx.restore();
+		}
 
-            if (!loaded) {
-                animationFrame = requestAnimationFrame(draw);
-                return;
-            }
+		function draw() {
+			time += 1;
 
-            // Entry Animation
-            if (entry < 1) {
-                entry += 0.015;
-                if (entry > 1) entry = 1;
-            }
-            // Ease out cubic
-            const easeEntry = 1 - Math.pow(1 - entry, 3);
+			// Clear & BG
+			const bgGrad = ctx.createRadialGradient(
+				width / 2,
+				height / 2,
+				0,
+				width / 2,
+				height / 2,
+				width
+			);
+			bgGrad.addColorStop(0, '#050b14');
+			bgGrad.addColorStop(1, '#000000');
+			ctx.fillStyle = bgGrad;
+			ctx.fillRect(0, 0, width, height);
 
-            const cx = width / 2;
-            const cy = height / 2;
+			if (!loaded) {
+				animationFrame = requestAnimationFrame(draw);
+				return;
+			}
 
-            // Parallax based on mouse
-            const px = (mouse.x - cx) * 0.02;
-            const py = (mouse.y - cy) * 0.02;
+			// Entry Animation
+			if (entry < 1) {
+				entry += 0.015;
+				if (entry > 1) entry = 1;
+			}
+			// Ease out cubic
+			const easeEntry = 1 - Math.pow(1 - entry, 3);
 
-            ctx.save();
-            ctx.translate(px, py);
+			const cx = width / 2;
+			const cy = height / 2;
 
-            // Only draw HUD/Drone in HOME mode
-            if (mode === "HOME" || mode === "HOLOGRAM") {
-                // Global entry fade
-                ctx.globalAlpha = easeEntry;
+			// Parallax based on mouse
+			const px = (mouse.x - cx) * 0.02;
+			const py = (mouse.y - cy) * 0.02;
 
-                // 1. Draw Rings
-                // Scale rings up from 0.8 to 1 during entry
-                ctx.save();
-                const ringEntryScale = 0.8 + 0.2 * easeEntry;
-                ctx.scale(ringEntryScale, ringEntryScale);
-                rings.forEach((ring) => drawRing(ctx, cx, cy, ring));
-                ctx.restore();
+			ctx.save();
+			ctx.translate(px, py);
 
-                // 2. Draw Drone
-                // Fly in from "back" (smaller to normal) or opacity
-                drawDrone(ctx, cx, cy, easeEntry); // Pass easeEntry to drawDrone
+			// Only draw HUD/Drone in HOME mode
+			if (mode === 'HOME' || mode === 'HOLOGRAM') {
+				// Global entry fade
+				ctx.globalAlpha = easeEntry;
 
-                // 3. Draw UI
-                drawUI(ctx, cx, cy);
-            }
+				// 1. Draw Rings
+				// Scale rings up from 0.8 to 1 during entry
+				ctx.save();
+				const ringEntryScale = 0.8 + 0.2 * easeEntry;
+				ctx.scale(ringEntryScale, ringEntryScale);
+				rings.forEach((ring) => drawRing(ctx, cx, cy, ring));
+				ctx.restore();
 
-            ctx.restore();
+				// 2. Draw Drone
+				// Fly in from "back" (smaller to normal) or opacity
+				drawDrone(ctx, cx, cy, easeEntry); // Pass easeEntry to drawDrone
 
-            animationFrame = requestAnimationFrame(draw);
-        }
+				// 3. Draw UI
+				drawUI(ctx, cx, cy);
+			}
 
-        window.addEventListener("resize", resize);
-        window.addEventListener("mousemove", handleMouseMove);
+			ctx.restore();
 
-        // Touch move for pseudo-parallax on mobile
-        window.addEventListener(
-            "touchmove",
-            (e) => {
-                const rect = canvas.getBoundingClientRect();
-                mouse.x = e.touches[0].clientX - rect.left;
-                mouse.y = e.touches[0].clientY - rect.top;
-            },
-            { passive: true },
-        );
+			animationFrame = requestAnimationFrame(draw);
+		}
 
-        setTimeout(() => {
-            resize();
-            draw();
-        }, 0);
+		window.addEventListener('resize', resize);
+		window.addEventListener('mousemove', handleMouseMove);
 
-        return () => {
-            window.removeEventListener("resize", resize);
-            window.removeEventListener("mousemove", handleMouseMove);
-            cancelAnimationFrame(animationFrame);
-        };
-    });
+		// Touch move for pseudo-parallax on mobile
+		window.addEventListener(
+			'touchmove',
+			(e) => {
+				const rect = canvas.getBoundingClientRect();
+				mouse.x = e.touches[0].clientX - rect.left;
+				mouse.y = e.touches[0].clientY - rect.top;
+			},
+			{ passive: true }
+		);
+
+		setTimeout(() => {
+			resize();
+			draw();
+		}, 0);
+
+		return () => {
+			window.removeEventListener('resize', resize);
+			window.removeEventListener('mousemove', handleMouseMove);
+			cancelAnimationFrame(animationFrame);
+		};
+	});
 </script>
 
 <canvas bind:this={canvas} class="artifact-bg"></canvas>
 
 <style>
-    .artifact-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: #000;
-        z-index: 0;
-        pointer-events: none;
-    }
+	.artifact-bg {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		background: #000;
+		z-index: 0;
+		pointer-events: none;
+	}
 </style>
