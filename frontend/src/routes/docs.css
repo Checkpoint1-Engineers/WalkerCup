@@ -1,0 +1,123 @@
+/* Docs Typography */
+h1 {
+	font-family: var(--wow-font-display);
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin: 0 0 1rem 0;
+	color: #fff;
+	text-shadow: 0 0 20px rgba(0, 243, 255, 0.3);
+}
+
+h2 {
+	font-family: var(--wow-font-display);
+	font-size: 1.5rem;
+	color: var(--wow-cyan);
+	border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+	padding-bottom: 0.75rem;
+	margin: 3rem 0 1.5rem 0;
+}
+
+h3 {
+	font-family: var(--wow-font-display);
+	font-size: 1.1rem;
+	color: #fff;
+	margin: 2rem 0 1rem 0;
+}
+
+p {
+	line-height: 1.7;
+	color: var(--wow-text-body);
+	margin-bottom: 1.5rem;
+}
+
+ul,
+ol {
+	color: var(--wow-text-body);
+	line-height: 1.8;
+	padding-left: 1.5rem;
+}
+
+li {
+	margin-bottom: 0.5rem;
+}
+
+code {
+	font-family: 'JetBrains Mono', 'Fira Code', monospace;
+	color: var(--wow-cyan);
+	background: rgba(0, 243, 255, 0.1);
+	padding: 0.15rem 0.4rem;
+	border-radius: 4px;
+	font-size: 0.9em;
+}
+
+pre {
+	background: rgba(5, 7, 10, 0.8);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 6px;
+	padding: 1.25rem;
+	overflow-x: auto;
+	font-family: 'JetBrains Mono', 'Fira Code', monospace;
+	font-size: 0.85rem;
+	color: #d4d4d4;
+	line-height: 1.5;
+	margin: 1.5rem 0;
+}
+
+pre code {
+	background: transparent;
+	color: inherit;
+	padding: 0;
+}
+
+/* Info Panel */
+.info-panel {
+	background: var(--wow-panel);
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 8px;
+	padding: 1.5rem;
+	margin: 1.5rem 0;
+}
+
+.info-panel h3 {
+	margin-top: 0;
+	color: var(--wow-cyan);
+}
+
+.info-panel p:last-child {
+	margin-bottom: 0;
+}
+
+/* Endpoint Badges */
+.badge {
+	display: inline-block;
+	padding: 0.25rem 0.5rem;
+	border-radius: 4px;
+	font-family: monospace;
+	font-weight: bold;
+	font-size: 0.75rem;
+	margin-right: 0.5rem;
+}
+
+.badge.get {
+	background: rgba(16, 185, 129, 0.2);
+	color: #34d399;
+	border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge.post {
+	background: rgba(245, 158, 11, 0.2);
+	color: #fbbf24;
+	border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge.put {
+	background: rgba(59, 130, 246, 0.2);
+	color: #60a5fa;
+	border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.badge.delete {
+	background: rgba(239, 68, 68, 0.2);
+	color: #f87171;
+	border: 1px solid rgba(239, 68, 68, 0.3);
+}
