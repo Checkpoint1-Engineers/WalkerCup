@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { resolve } from '$app/paths';
+	import { resolveRoute } from '$app/paths';
 	import Mission from './landing/Mission.svelte';
 	import Features from './landing/Features.svelte';
 	import FAQ from './landing/FAQ.svelte';
